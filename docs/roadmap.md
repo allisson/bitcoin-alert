@@ -70,16 +70,16 @@
 
 ### REST client
 
-- [ ] Implement the Binance REST API client (OkHttp + kotlinx.serialization).
-- [ ] Implement historical kline retrieval.
-- [ ] Support 5m timeframe.
-- [ ] Support 15m timeframe.
-- [ ] Support 1h timeframe.
-- [ ] Support 1d timeframe.
-- [ ] Implement API response parsing.
-- [ ] Implement error handling.
-- [ ] Implement request cancellation.
-- [ ] Add unit tests for response parsing.
+- [x] Implement the Binance REST API client (OkHttp + kotlinx.serialization).
+- [x] Implement historical kline retrieval.
+- [x] Support 5m timeframe.
+- [x] Support 15m timeframe.
+- [x] Support 1h timeframe.
+- [x] Support 1d timeframe.
+- [x] Implement API response parsing.
+- [x] Implement error handling.
+- [x] Implement request cancellation.
+- [x] Add unit tests for response parsing.
 
 ### WebSocket client
 
@@ -89,8 +89,8 @@
 - [ ] Declare `INTERNET` and `ACCESS_NETWORK_STATE` and block cleartext traffic with a Network Security Configuration (`cleartextTrafficPermitted="false"`; `spec.md` §5).
 - [ ] Switch the kline subscription on timeframe change (`UNSUBSCRIBE` + `SUBSCRIBE`, same connection). Coalesce every stream set change (timeframe and Home visibility): the first change after a quiet second goes out immediately, then at most once per second, send only the difference to the latest desired set (5 messages per second limit, pings and pongs included); while `Connecting`/`Reconnecting`, send nothing and build the next URL from the latest set, then send the difference after `onOpen` (`spec.md` §3.3), with unit tests.
 - [ ] Discard kline messages from the previous interval after a timeframe change and cancel the previous REST candle load (`spec.md` §3.3), with unit tests.
-- [ ] Implement ticker message parsing.
-- [ ] Implement kline message parsing.
+- [x] Implement ticker message parsing.
+- [x] Implement kline message parsing.
 - [ ] Give each `SUBSCRIBE`/`UNSUBSCRIBE` request an integer `id` from a counter in the client starting at 1 (`spec.md` §2.2).
 - [ ] Handle `SUBSCRIBE`/`UNSUBSCRIBE` responses (`{"result", "id"}` and errors `{"code", "msg"}` with an optional `"id"`, not wrapped; `spec.md` §2.2). A failure response is logged and treated as a lost connection, so the reconnection restores the subscriptions, with unit tests.
 - [ ] Implement connection state tracking.
@@ -100,19 +100,19 @@
 - [ ] Reconnect after 10 seconds without messages while `Connected` (half-open connection watchdog; off while `Connecting`/`Reconnecting`), with unit tests.
 - [ ] Reset the backoff on `ConnectivityManager` network availability, only in `Connecting` or `Reconnecting` (`onAvailable` fires on registration); a failed attempt after it waits the backoff delay, with unit tests.
 - [ ] Implement the internal `Idle` state (empty stream set, connection closed on purpose; backoff, watchdog and network callback do nothing; entering it resets the backoff counter; `spec.md` §3.3), with unit tests.
-- [ ] Normalize parsed prices (not volume or the 24-hour change) with `setScale(2, RoundingMode.UNNECESSARY)`, discard and log a message whose price is finer than the tick size instead of crashing, and compare prices only with `compareTo` (`spec.md` §2.5), with unit tests.
+- [x] Normalize parsed prices (not volume or the 24-hour change) with `setScale(2, RoundingMode.UNNECESSARY)`, discard and log a message whose price is finer than the tick size instead of crashing, and compare prices only with `compareTo` (`spec.md` §2.5), with unit tests.
 - [ ] Derive the stream set from Home visibility and monitoring state (`spec.md` §3.3), with unit tests. Monitoring state exists only from Phase 4: here, test the derivation function and treat monitoring as stopped; Phase 4 wires the real state.
 - [ ] Implement connection recovery, restoring current subscriptions.
 - [ ] Handle the Binance 24-hour connection close as a routine reconnection.
 - [ ] Avoid duplicate subscriptions.
-- [ ] Add WebSocket parser tests.
+- [x] Add WebSocket parser tests.
 - [ ] Validate behavior with a real Binance connection.
 
 ### Domain models
 
-- [ ] Define the Bitcoin ticker model.
-- [ ] Define the candlestick model.
-- [ ] Define the market connection state.
+- [x] Define the Bitcoin ticker model.
+- [x] Define the candlestick model.
+- [x] Define the market connection state.
 - [ ] Implement market data repositories as concrete classes (interface only when a test needs a fake).
 
 **Acceptance criteria:**
