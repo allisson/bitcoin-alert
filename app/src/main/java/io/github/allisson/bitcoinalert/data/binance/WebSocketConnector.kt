@@ -19,6 +19,8 @@ interface WebSocketConnector {
     }
 
     interface Connection {
+        fun send(text: String): Boolean
+
         /** Graceful close, for a deliberate disconnect. */
         fun close()
 
@@ -51,6 +53,8 @@ class OkHttpWebSocketConnector(private val httpClient: OkHttpClient) : WebSocket
             },
         )
         return object : WebSocketConnector.Connection {
+            override fun send(text: String) = webSocket.send(text)
+
             override fun close() {
                 webSocket.close(1000, null)
             }
