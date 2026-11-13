@@ -35,6 +35,11 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // android.util.Log returns defaults instead of throwing in JVM tests.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {

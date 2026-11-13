@@ -507,7 +507,7 @@ Loading candles (only while Home is visible, the only situation with a kline str
 
 After reconnection, reload the candles this way to restore chart consistency. Returning to Home with monitoring running re-subscribes the kline stream on the existing connection, without a reconnection; it must reload too, or the chart keeps a gap for the time Home was not visible.
 
-If the REST request fails, the chart shows the error with a retry action. The next reconnection also retries the load.
+If the REST request fails, the chart shows the error with a retry action. The next reconnection also retries the load. A REST response with any price finer than the tick size fails the whole load like any other error: discarding only that candle, as the WebSocket parser does with a message, would leave a silent gap in the chart.
 
 Binance closes connections after 24 hours (see §2.8); reconnection must restore the current subscriptions.
 
