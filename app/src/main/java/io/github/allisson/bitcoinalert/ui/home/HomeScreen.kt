@@ -1,32 +1,39 @@
 package io.github.allisson.bitcoinalert.ui.home
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,15 +45,11 @@ import io.github.allisson.bitcoinalert.domain.model.ConnectionState
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.ui.charts.CandleChart
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
+import io.github.allisson.bitcoinalert.ui.theme.MonoFamily
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    onOpenAlerts: () -> Unit,
-    onOpenHistory: () -> Unit,
-    viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory),
-) {
+fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
     // This destination's lifecycle is STARTED only while Home is the current route and the app is visible.
     val homeVisible = (LocalContext.current.applicationContext as BitcoinAlertApp).homeVisible
     LifecycleStartEffect(homeVisible) {
@@ -56,81 +59,116 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
-                actions = {
-                    TextButton(onClick = onOpenAlerts) { Text(stringResource(R.string.alerts)) }
-                    TextButton(onClick = onOpenHistory) { Text(stringResource(R.string.history)) }
-                },
-            )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            PriceSection(state, locale)
-            TimeframeSelector(state.timeframe, viewModel::selectTimeframe)
-            CandlesArea(state.candles, locale, viewModel::retryCandles)
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        PriceSection(state, locale)
+        TimeframeTabs(state.timeframe, viewModel::selectTimeframe)
+        CandlesArea(state.candles, locale, viewModel::retryCandles)
     }
 }
 
 @Composable
 private fun PriceSection(state: HomeUiState, locale: Locale) {
     val placeholder = stringResource(R.string.price_placeholder)
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.pair), style = MaterialTheme.typography.titleMedium)
-        Text(
-            state.ticker?.let { formatPrice(it.lastPrice, locale) } ?: placeholder,
-            style = MaterialTheme.typography.displaySmall,
-        )
-        val change = state.ticker?.let { formatChange(it.changePercent, locale) }
-        Text(
-            change?.text ?: placeholder,
-            style = MaterialTheme.typography.titleMedium,
-            color = when (change?.direction) {
-                ChangeDirection.Up -> LocalPriceColors.current.up
-                ChangeDirection.Down -> LocalPriceColors.current.down
-                else -> MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        )
-        Text(
-            stringResource(
-                when (state.connection) {
-                    ConnectionState.Connected -> R.string.connected
-                    ConnectionState.Reconnecting -> R.string.reconnecting
-                    else -> R.string.connecting
-                },
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (state.stale) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(stringResource(R.string.pair), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            ConnectionPill(state.connection)
+            if (state.stale) StalePill()
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                stringResource(R.string.stale),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
+                state.ticker?.let { formatPrice(it.lastPrice, locale) } ?: placeholder,
+                modifier = Modifier.alignByBaseline(),
+                style = MaterialTheme.typography.displaySmall,
+                fontFamily = MonoFamily,
+                fontWeight = FontWeight.SemiBold,
             )
+            if (state.ticker != null) {
+                Text(stringResource(R.string.usdt), Modifier.alignByBaseline(), color = muted, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+        val change = state.ticker?.let { formatChange(it.changePercent, locale) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                change?.text ?: placeholder,
+                modifier = Modifier.alignByBaseline(),
+                style = MaterialTheme.typography.titleSmall,
+                fontFamily = MonoFamily,
+                fontWeight = FontWeight.SemiBold,
+                color = when (change?.direction) {
+                    ChangeDirection.Up -> LocalPriceColors.current.up
+                    ChangeDirection.Down -> LocalPriceColors.current.down
+                    else -> muted
+                },
+            )
+            Text(stringResource(R.string.change_period), Modifier.alignByBaseline(), color = muted, style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
 @Composable
-private fun TimeframeSelector(selected: Timeframe?, onSelect: (Timeframe) -> Unit) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        Timeframe.entries.forEachIndexed { index, timeframe ->
-            SegmentedButton(
-                selected = timeframe == selected,
-                onClick = { onSelect(timeframe) },
-                shape = SegmentedButtonDefaults.itemShape(index, Timeframe.entries.size),
-            ) { Text(timeframe.binanceInterval) }
+private fun ConnectionPill(connection: ConnectionState) {
+    val (label, dot) = when (connection) {
+        ConnectionState.Connected -> R.string.connected to LocalPriceColors.current.up
+        ConnectionState.Reconnecting -> R.string.reconnecting to MaterialTheme.colorScheme.tertiary
+        else -> R.string.connecting to MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    Pill(MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Box(Modifier.size(6.dp).background(dot, CircleShape))
+        Text(stringResource(label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun StalePill() {
+    val description = stringResource(R.string.stale)
+    Pill(MaterialTheme.colorScheme.tertiaryContainer, Modifier.semantics(mergeDescendants = true) { contentDescription = description }) {
+        Text(stringResource(R.string.stale_short), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onTertiaryContainer)
+    }
+}
+
+@Composable
+private fun Pill(color: Color, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Row(
+        modifier.background(color, CircleShape).padding(horizontal = 8.dp, vertical = 3.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) { content() }
+}
+
+@Composable
+private fun TimeframeTabs(selected: Timeframe?, onSelect: (Timeframe) -> Unit) {
+    Row(Modifier.fillMaxWidth().selectableGroup(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Timeframe.entries.forEach { timeframe ->
+            val on = timeframe == selected
+            Box(
+                Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(if (on) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                    .selectable(selected = on, role = Role.Tab, onClick = { onSelect(timeframe) }),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    timeframe.binanceInterval,
+                    fontFamily = MonoFamily,
+                    fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (on) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

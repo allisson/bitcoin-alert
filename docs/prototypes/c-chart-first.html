@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype C · Chart first</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+:root {
+  --font: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --page: #E4E6EC; --bg: #FAFBFD; --surface: #FFFFFF; --surface2: #EDEFF4; --text: #12141A; --muted: #626875; --line: #E3E6ED;
+  --up: #0F9D63; --down: #D9304F; --accent: #5B4BDB; --onaccent: #FFFFFF; --accentc: #E7E4FF; --warn: #9A5B00; --warnbg: #FFF0D6; --bezel: #16171B;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #06070A; --bg: #0D0F14; --surface: #161922; --surface2: #20242F; --text: #E9EBF1; --muted: #8F96A6; --line: #242936;
+  --up: #34C98B; --down: #FF5C77; --accent: #A99CFF; --onaccent: #17113D; --accentc: #2A2550; --warn: #FFC56B; --warnbg: #33270F; --bezel: #272A32;
+} }
+:root[data-theme="dark"] {
+  --page: #06070A; --bg: #0D0F14; --surface: #161922; --surface2: #20242F; --text: #E9EBF1; --muted: #8F96A6; --line: #242936;
+  --up: #34C98B; --down: #FF5C77; --accent: #A99CFF; --onaccent: #17113D; --accentc: #2A2550; --warn: #FFC56B; --warnbg: #33270F; --bezel: #272A32;
+}
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.over { padding: 4px 16px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+.over .pair { font-size: 13px; color: var(--muted); font-weight: 600; display: flex; gap: 8px; align-items: center; }
+.over .pair i { width: 7px; height: 7px; border-radius: 50%; background: var(--up); }
+.over .p { font-family: var(--mono); font-size: 30px; font-weight: 600; letter-spacing: -.02em; }
+.over .c { font-family: var(--mono); font-size: 13px; color: var(--up); font-weight: 600; display: flex; align-items: center; }
+.over .c .ic { width: 18px; height: 18px; }
+.tf { display: flex; flex-direction: column; gap: 4px; }
+.tf button { font-family: var(--mono); font-size: 12px; width: 40px; padding: 5px 0; border-radius: 8px; color: var(--muted); border: 1px solid var(--line); background: var(--bg); }
+.tf button.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.stage { position: relative; margin-top: 6px; }
+.tip { position: absolute; left: 196px; top: 30px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-family: var(--mono); font-size: 10.5px; line-height: 1.6; box-shadow: 0 6px 18px rgba(0,0,0,.14); }
+.tip span { color: var(--muted); }
+.hint { position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%); font-size: 11px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+.dock { position: absolute; left: 10px; right: 10px; bottom: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.14); }
+.dock .m { display: flex; align-items: center; gap: 10px; }
+.dock .m .s { flex: 1; }
+.dock .m b { font-size: 14px; display: flex; align-items: center; gap: 6px; }
+.dock .m b i { width: 8px; height: 8px; border-radius: 50%; background: var(--up); }
+.dock .m small { font-size: 12px; color: var(--muted); }
+.stopb { padding: 8px 14px; border-radius: 12px; background: var(--surface2); font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.stopb .ic { width: 16px; height: 16px; }
+.batt { margin-top: 10px; display: flex; gap: 8px; align-items: center; font-size: 12px; padding: 8px 10px; border-radius: 12px; background: var(--warnbg); color: var(--warn); }
+.batt span { flex: 1; color: var(--text); }
+.batt button { color: var(--warn); font-weight: 700; font-size: 12px; }
+.dock .links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.dock .links button { padding: 11px; border-radius: 14px; background: var(--accentc); color: var(--accent); font-weight: 700; font-size: 13.5px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.dock .links b { background: var(--accent); color: var(--onaccent); border-radius: 99px; font-size: 11px; padding: 0 6px; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; top: 210px; background: var(--surface); border-radius: 26px 26px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.18); padding: 8px 16px 16px; overflow: hidden; }
+.handle { width: 36px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 10px; }
+.sheet h3 { font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+.sheet h3 button { font-size: 13px; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.sheet .sub { font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+.ladder { position: relative; height: 300px; margin-left: 4px; }
+.ladder::before { content: ''; position: absolute; left: 76px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+.lv { position: absolute; left: 0; right: 0; display: grid; grid-template-columns: 70px 16px 1fr auto; gap: 6px; align-items: center; transform: translateY(-50%); }
+.lv .px { font-family: var(--mono); font-size: 12px; text-align: right; font-weight: 600; }
+.lv .dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--surface); margin-left: 1px; }
+.lv .dot.above { background: var(--up); }
+.lv .dot.below { background: var(--down); }
+.lv .dot.trig { background: var(--muted); }
+.lv .dot.off { background: var(--surface); border: 2px dashed var(--muted); }
+.lv .info { font-size: 12px; background: var(--surface2); border-radius: 10px; padding: 6px 9px; }
+.lv .info b { display: block; font-size: 12.5px; }
+.lv .info small { color: var(--muted); font-size: 11px; }
+.lv.off { opacity: .6; }
+.lv.now .px { color: var(--accent); }
+.lv.now .dot { background: var(--accent); width: 14px; height: 14px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); }
+.lv.now .info { background: none; padding: 0; font-weight: 700; color: var(--accent); font-size: 12px; }
+.mini { width: 40px; height: 22px; border-radius: 99px; background: var(--accent); position: relative; }
+.mini::after { content: ''; position: absolute; right: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--onaccent); }
+.mini.offs { background: var(--surface2); }
+.mini.offs::after { left: 3px; right: auto; background: var(--muted); }
+.reac { font-size: 11.5px; font-weight: 700; color: var(--accent); display: flex; gap: 2px; align-items: center; }
+.reac .ic { width: 16px; height: 16px; }
+.cs { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 26px 26px 0 0; padding: 8px 16px 16px; box-shadow: 0 -10px 30px rgba(0,0,0,.18); }
+.cs .q { font-size: 15px; color: var(--muted); }
+.cs .q b { color: var(--text); }
+.cs .tv { font-family: var(--mono); font-size: 32px; font-weight: 600; margin: 4px 0 2px; display: flex; align-items: center; gap: 8px; }
+.cs .tv .tag { font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--up); background: color-mix(in srgb, var(--up) 14%, transparent); padding: 3px 8px; border-radius: 99px; }
+.cs .meta { font-size: 12px; color: var(--muted); }
+.nudge { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0; }
+.nudge button { padding: 9px 0; border-radius: 10px; background: var(--surface2); font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
+.cs .acts { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.cs .acts button { padding: 14px 16px; border-radius: 14px; font-weight: 700; font-size: 14.5px; }
+.cs .typed { background: var(--surface2); }
+.cs .go { background: var(--accent); color: var(--onaccent); }
+.th { padding: 0 16px; }
+.th h1 { font-size: 22px; padding: 10px 0 2px; display: flex; align-items: center; gap: 6px; }
+.th h1 .ic { width: 22px; height: 22px; }
+.th p { font-size: 12.5px; color: var(--muted); }
+.stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 14px 0 6px; }
+.stats div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+.stats b { font-family: var(--mono); font-size: 18px; display: block; }
+.stats small { font-size: 11px; color: var(--muted); }
+.tl { position: relative; padding: 8px 16px 0 44px; }
+.tl::before { content: ''; position: absolute; left: 25px; top: 0; bottom: 0; width: 2px; background: var(--line); }
+.tday { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin: 12px 0 8px -28px; background: var(--bg); display: inline-block; padding: 2px 0; position: relative; }
+.ev { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+.ev::before { content: ''; position: absolute; left: -25px; top: 16px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid var(--bg); }
+.ev.above::before { background: var(--up); }
+.ev.below::before { background: var(--down); }
+.ev .r { display: flex; justify-content: space-between; font-size: 13.5px; font-weight: 600; }
+.ev .r time { font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 500; }
+.ev .d { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ev .d b { font-family: var(--mono); color: var(--text); font-weight: 500; }
+.ev .r .a { color: var(--up); }
+.ev.below .r .a { color: var(--down); }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>C · Chart first</h1>
+    <p>The chart is the app. It fills the screen, alerts are drawn on it as price lines, and you create an alert by long-pressing the chart at a price. Monitoring lives in a floating dock. Alerts open as a sheet with a price ladder, so you see where each target sits relative to the current price.</p>
+  </div>
+  <button class="toggle" data-theme-toggle>Light / dark</button>
+</div>
+
+<div class="row">
+  <!-- HOME -->
+  <div class="screen"><h2>Home</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="over">
+          <div>
+            <div class="pair"><i></i>BTC/USDT · Live</div>
+            <div class="p">97,412.35</div>
+            <div class="c"><i data-ic="up"></i>+2.41% 24h</div>
+          </div>
+          <div class="tf" data-group><button>5m</button><button>15m</button><button class="on">1h</button><button>1d</button></div>
+        </div>
+        <div class="stage">
+          <div data-chart='{"w":340,"h":360,"seed":11,"n":42,"sel":33,"lines":[{"p":100000,"dir":"above","label":"▲ 100,000"},{"p":92500,"dir":"below","label":"▼ 92,500"}]}'></div>
+          <div class="tip" data-ohlc="<div><span>Nov 13 09:00</span></div><div><span>O</span> {o}</div><div><span>H</span> {h}</div><div><span>L</span> {l}</div><div><span>C</span> {c}</div><div><span>V</span> {v}</div>"></div>
+        </div>
+      </div>
+      <div class="hint" style="bottom:206px">Long-press the chart to add an alert</div>
+      <div class="dock">
+        <div class="m"><div class="s"><b><i></i>Monitoring</b><small>Running · 2 alerts armed</small></div><button class="stopb"><i data-ic="stop"></i>Stop</button></div>
+        <div class="batt"><i data-ic="battery"></i><span>Battery optimization can pause it</span><button>Allow</button></div>
+        <div class="links"><button><i data-ic="bell"></i>Alerts <b>2</b></button><button><i data-ic="history"></i>History</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS SHEET -->
+  <div class="screen"><h2>Alerts (sheet)</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content" style="opacity:.55">
+        <div class="over"><div><div class="pair"><i></i>BTC/USDT · Live</div><div class="p">97,412.35</div></div></div>
+        <div data-chart='{"w":340,"h":200,"seed":11,"n":42,"vol":0,"lines":[{"p":100000,"dir":"above","label":"▲ 100,000"},{"p":92500,"dir":"below","label":"▼ 92,500"}]}'></div>
+      </div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <h3>Alerts <button><i data-ic="plus"></i>New</button></h3>
+        <div class="sub">Ordered by price. Tap a level to edit it.</div>
+        <div class="ladder">
+          <div class="lv" style="top:4%"><span class="px">100,000.00</span><span class="dot above"></span><div class="info"><b>Rises above</b><small>Active · 2.66% away</small></div><span class="mini"></span></div>
+          <div class="lv" style="top:24%"><span class="px">98,000.00</span><span class="dot trig"></span><div class="info"><b>Triggered</b><small>Hit 98,000.12 · Nov 12</small></div><button class="reac"><i data-ic="replay"></i>Rearm</button></div>
+          <div class="lv now" style="top:38%"><span class="px">97,412.35</span><span class="dot"></span><div class="info">Now</div></div>
+          <div class="lv" style="top:66%"><span class="px">92,500.00</span><span class="dot below"></span><div class="info"><b>Falls below</b><small>Active · 5.04% away</small></div><span class="mini"></span></div>
+          <div class="lv off" style="top:94%"><span class="px">85,000.00</span><span class="dot off"></span><div class="info"><b>Falls below</b><small>Disabled</small></div><span class="mini offs"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE BY LONG PRESS -->
+  <div class="screen"><h2>New alert (long-press)</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="over"><div><div class="pair"><i></i>BTC/USDT · Live</div><div class="p">97,412.35</div></div></div>
+        <div data-chart='{"w":340,"h":380,"seed":11,"n":42,"drag":97800,"lines":[{"p":92500,"dir":"below","label":"▼ 92,500"}]}'></div>
+      </div>
+      <div class="cs">
+        <div class="handle"></div>
+        <div class="q">Alert me when the price <b>rises above</b></div>
+        <div class="tv">97,800.00 <span class="tag">▲ Above</span></div>
+        <div class="meta">0.40% above the current price · direction follows the line</div>
+        <div class="nudge"><button>−100</button><button>−10</button><button>+10</button><button>+100</button></div>
+        <div class="acts"><button class="typed">Type price</button><button class="go">Create alert</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen"><h2>History</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="th"><h1><span data-ic="back"></span>History</h1><p>Every alert that fired, newest first.</p>
+          <div class="stats"><div><b>4</b><small>this week</small></div><div><b>2</b><small>above</small></div><div><b>2</b><small>below</small></div></div>
+        </div>
+        <div class="tl">
+          <div class="tday">Today</div>
+          <div class="ev below"><div class="r"><span class="a">▼ Fell below 96,000.00</span><time>08:15</time></div><div class="d">Observed <b>95,998.40</b></div></div>
+          <div class="tday">Yesterday</div>
+          <div class="ev above"><div class="r"><span class="a">▲ Rose above 98,000.00</span><time>14:32</time></div><div class="d">Observed <b>98,000.12</b></div></div>
+          <div class="ev above"><div class="r"><span class="a">▲ Rose above 97,500.00</span><time>11:07</time></div><div class="d">Observed <b>97,503.88</b></div></div>
+          <div class="tday">Nov 8</div>
+          <div class="ev below"><div class="r"><span class="a">▼ Fell below 90,000.00</span><time>22:48</time></div><div class="d">Observed <b>89,991.02</b></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <section><h3>What changes from today</h3><ul>
+    <li><b>Chart takes the screen</b>; price and timeframe float over it.</li>
+    <li><b>Floating dock</b> holds monitoring, the battery action and the links to Alerts and History.</li>
+    <li><b>OHLC as a tooltip</b> next to the selected candle instead of a line above the chart.</li>
+  </ul></section>
+  <section><h3>Beyond the spec (decide before Phase 3)</h3><ul>
+    <li><b>Alert lines on the chart</b>: Vico needs a horizontal-line decoration per active alert; targets outside the visible range pin to the edge with an arrow.</li>
+    <li><b>Long-press to create</b>: direction follows the line (above or below the current price), with nudge buttons and "Type price" as the fallback. A11y: the typed path must stay.</li>
+    <li><b>Price ladder</b> orders alerts by price, not newest first (spec §4 asks for newest first per list; sort in Kotlin with compareTo).</li>
+    <li><b>Week stats</b> in History.</li>
+  </ul></section>
+</div>
+<script src="shared.js"></script>
+</body>
+</html>

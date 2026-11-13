@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype B · Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+:root {
+  --font: 'Figtree', system-ui, sans-serif;
+  --page: #E9ECE7; --bg: #F5F7F3; --surface: #FFFFFF; --surface2: #E9EEE7; --text: #171D19; --muted: #5C6660; --line: #DFE4DD;
+  --up: #17834A; --down: #C42A3B; --upc: #D5F0DF; --downc: #FADADD;
+  --accent: #1E5C47; --accentc: #CBEBDC; --onaccent: #FFFFFF; --onaccentc: #0B2E22; --warn: #8A5300; --warnbg: #FCEBC8; --bezel: #1A1C1A;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #0A0D0B; --bg: #0F1311; --surface: #181E1B; --surface2: #222A26; --text: #E2E8E3; --muted: #9AA59E; --line: #2A332E;
+  --up: #5DD08D; --down: #FF7A82; --upc: #163826; --downc: #43191D;
+  --accent: #8FD5B7; --accentc: #1E3D31; --onaccent: #05271A; --onaccentc: #C3EEDA; --warn: #F4C26B; --warnbg: #352812; --bezel: #2B302D;
+} }
+:root[data-theme="dark"] {
+  --page: #0A0D0B; --bg: #0F1311; --surface: #181E1B; --surface2: #222A26; --text: #E2E8E3; --muted: #9AA59E; --line: #2A332E;
+  --up: #5DD08D; --down: #FF7A82; --upc: #163826; --downc: #43191D;
+  --accent: #8FD5B7; --accentc: #1E3D31; --onaccent: #05271A; --onaccentc: #C3EEDA; --warn: #F4C26B; --warnbg: #352812; --bezel: #2B302D;
+}
+.bar { display: flex; align-items: center; gap: 4px; padding: 6px 8px 6px 18px; height: 56px; }
+.bar h1 { font-size: 20px; font-weight: 700; flex: 1; }
+.bar.back { padding-left: 6px; }
+.ibtn { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--text); position: relative; }
+.ibtn .ic { width: 22px; height: 22px; }
+.dotb { position: absolute; top: 9px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--down); border: 2px solid var(--bg); }
+.card { background: var(--surface); border-radius: 24px; margin: 0 12px 10px; padding: 16px; }
+.hero { padding: 18px 18px 16px; }
+.hero .pair { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); font-weight: 600; }
+.conn { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.conn i { width: 7px; height: 7px; border-radius: 50%; background: var(--up); }
+.big { font-size: 40px; font-weight: 800; letter-spacing: -.03em; margin: 6px 0 8px; font-variant-numeric: tabular-nums; }
+.big small { font-size: 15px; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-left: 4px; }
+.pill { display: inline-flex; align-items: center; gap: 2px; padding: 5px 10px 5px 6px; border-radius: 99px; font-size: 13px; font-weight: 700; }
+.pill.up { background: var(--upc); color: var(--up); }
+.pill.down { background: var(--downc); color: var(--down); }
+.pill .ic { width: 18px; height: 18px; }
+.mon { background: var(--accentc); color: var(--onaccentc); display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+.mon h3 { font-size: 16px; font-weight: 700; }
+.mon p { font-size: 13px; opacity: .8; }
+.toggle-big { width: 56px; height: 32px; border-radius: 99px; background: var(--accent); position: relative; grid-row: span 2; }
+.toggle-big::after { content: ''; position: absolute; right: 4px; top: 4px; width: 24px; height: 24px; border-radius: 50%; background: var(--onaccent); }
+.mon .extra { grid-column: 1 / -1; margin-top: 10px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--onaccentc) 18%, transparent); display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.mon .extra span { flex: 1; }
+.mon .extra span[data-ic] { flex: none; }
+.mon .extra button { font-weight: 700; padding: 6px 12px; border-radius: 99px; background: var(--surface); color: var(--text); font-size: 12.5px; }
+.seg { display: flex; background: var(--surface2); border-radius: 99px; padding: 3px; }
+.seg button { flex: 1; padding: 7px 0; border-radius: 99px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.ohlc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 4px; margin-top: 12px; }
+.ohlc div { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+.ohlc b { display: block; color: var(--text); font-size: 12px; font-variant-numeric: tabular-nums; margin-top: 1px; }
+.chartbox { margin: 6px -6px 0 -4px; }
+.when { font-size: 11.5px; color: var(--muted); margin-top: 10px; }
+.ctitle { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ctitle h3 { font-size: 15px; font-weight: 700; }
+.ctitle a { font-size: 13px; font-weight: 700; color: var(--accent); }
+.mini { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.mini + .mini { border-top: 1px solid var(--line); }
+.av { width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; flex: none; }
+.av.up { background: var(--upc); color: var(--up); }
+.av.down { background: var(--downc); color: var(--down); }
+.mini .t { flex: 1; }
+.mini b { font-size: 15px; font-variant-numeric: tabular-nums; }
+.mini small { display: block; font-size: 12px; color: var(--muted); }
+.track { height: 6px; border-radius: 6px; background: var(--surface2); margin-top: 6px; position: relative; }
+.track i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 6px; }
+.chips { display: flex; gap: 8px; padding: 0 12px 12px; overflow: hidden; }
+.chip { padding: 8px 14px; border-radius: 12px; border: 1px solid var(--line); font-size: 13.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.chip.on { background: var(--accentc); color: var(--onaccentc); border-color: transparent; }
+.chip b { margin-left: 4px; font-weight: 800; }
+.acard { background: var(--surface); border-radius: 24px; margin: 0 12px 10px; padding: 16px; }
+.acard .r1 { display: flex; align-items: center; gap: 12px; }
+.acard .r1 .t { flex: 1; }
+.acard .lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.acard .lbl.up { color: var(--up); }
+.acard .lbl.down { color: var(--down); }
+.acard .tp { font-size: 24px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.acard .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.acard .acts { display: flex; gap: 8px; margin-top: 12px; }
+.tbtn { padding: 8px 14px; border-radius: 99px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+.tbtn .ic { width: 18px; height: 18px; }
+.tbtn.tonal { background: var(--surface2); }
+.tbtn.filled { background: var(--accent); color: var(--onaccent); }
+.switch { width: 52px; height: 32px; border-radius: 99px; background: var(--surface2); border: 2px solid var(--muted); position: relative; flex: none; }
+.switch::after { content: ''; position: absolute; top: 6px; left: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted); transition: all .15s; }
+.switch.on { background: var(--accent); border-color: var(--accent); }
+.switch.on::after { left: 22px; top: 2px; width: 24px; height: 24px; background: var(--onaccent); }
+.efab { position: absolute; right: 16px; bottom: 20px; display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-radius: 18px; background: var(--accentc); color: var(--onaccentc); font-weight: 800; font-size: 15px; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.create { display: flex; flex-direction: column; height: 100%; }
+.dirpick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 4px 16px 0; }
+.dirpick button { border-radius: 18px; padding: 12px; text-align: left; border: 1.5px solid var(--line); }
+.dirpick button b { display: flex; align-items: center; gap: 4px; font-size: 15px; }
+.dirpick button small { font-size: 12px; color: var(--muted); }
+.dirpick button.on { border-color: var(--up); background: var(--upc); }
+.dirpick button.on b { color: var(--up); }
+.display { text-align: center; padding: 26px 16px 4px; }
+.display .v { font-size: 44px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.display .v i { display: inline-block; width: 3px; height: 40px; background: var(--accent); vertical-align: -6px; margin-left: 2px; }
+.display .u { font-size: 14px; color: var(--muted); font-weight: 600; }
+.display .ok { margin-top: 10px; display: inline-flex; gap: 6px; align-items: center; font-size: 13px; padding: 6px 12px; border-radius: 99px; background: var(--surface); }
+.display .ok b { font-variant-numeric: tabular-nums; }
+.keys { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px 16px 16px; }
+.keys span { padding: 13px 0; border-radius: 99px; background: var(--surface); text-align: center; font-size: 22px; font-weight: 600; display: flex; justify-content: center; }
+.save { margin: 0 16px; padding: 15px; border-radius: 99px; background: var(--accent); color: var(--onaccent); font-weight: 800; font-size: 16px; text-align: center; }
+.group { font-size: 13px; font-weight: 700; color: var(--muted); padding: 14px 24px 8px; }
+.hcard { background: var(--surface); border-radius: 22px; margin: 0 12px 8px; padding: 14px 16px; display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; }
+.hcard b { font-size: 15px; display: block; font-variant-numeric: tabular-nums; }
+.hcard small { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hcard time { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hcard .slip { font-size: 11.5px; color: var(--muted); text-align: right; display: block; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>B · Cards</h1>
+    <p>Material 3 with tonal cards and large, friendly numbers. Home is a vertical feed: price, monitoring, chart, next alerts. Alerts and History open from the top bar, like today, so navigation does not change. Monitoring is a big switch, the most important control in the app.</p>
+  </div>
+  <button class="toggle" data-theme-toggle>Light / dark</button>
+</div>
+
+<div class="row">
+  <!-- HOME -->
+  <div class="screen"><h2>Home</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="bar"><h1>Bitcoin Alert</h1><button class="ibtn" data-ic="bell"></button><button class="ibtn"><span data-ic="history"></span><i class="dotb"></i></button></div>
+        <div class="card hero">
+          <div class="pair"><span>BTC / USDT</span><span class="conn"><i></i>Connected</span></div>
+          <div class="big">97,412.35<small>USDT</small></div>
+          <span class="pill up"><i data-ic="up"></i>2.41% today</span>
+        </div>
+        <div class="card mon">
+          <h3>Monitoring is on</h3><span class="toggle-big"></span>
+          <p>Watching 2 alerts in the background</p>
+          <div class="extra"><span data-ic="battery"></span><span>Allow background use so Android does not pause it</span><button>Allow</button></div>
+        </div>
+        <div class="card">
+          <div class="seg" data-group><button>5m</button><button>15m</button><button class="on">1h</button><button>1d</button></div>
+          <div class="ohlc" data-ohlc="<div>Open<b>{o}</b></div><div>High<b>{h}</b></div><div>Low<b>{l}</b></div><div>Close<b>{c}</b></div><div style="grid-column:span 2">Volume<b>{v} BTC</b></div>"></div>
+          <div class="chartbox" data-chart='{"w":318,"h":230,"seed":11,"n":40}'></div>
+          <div class="when">Nov 13, 18:00 · tap a candle to inspect it</div>
+        </div>
+        <div class="card">
+          <div class="ctitle"><h3>Next alerts</h3><a>See all</a></div>
+          <div class="mini"><span class="av up" data-ic="tup"></span><div class="t"><b>100,000.00</b><small>2.66% above current price</small></div></div>
+          <div class="mini"><span class="av down" data-ic="tdown"></span><div class="t"><b>92,500.00</b><small>5.04% below current price</small></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="screen"><h2>Alerts</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="bar back"><button class="ibtn" data-ic="back"></button><h1>Alerts</h1></div>
+        <div class="chips" data-group><button class="chip on">Active<b>2</b></button><button class="chip">Triggered<b>1</b></button><button class="chip">Disabled<b>1</b></button></div>
+        <div class="acard">
+          <div class="r1"><span class="av up" data-ic="tup"></span><div class="t"><div class="lbl up">Rises above</div><div class="tp">100,000.00</div></div><span class="switch on"></span></div>
+          <div class="track"><i style="width:74%;background:var(--up)"></i></div>
+          <div class="meta"><span>Now 97,412.35 · 2.66% to go</span><span>Nov 13</span></div>
+        </div>
+        <div class="acard">
+          <div class="r1"><span class="av down" data-ic="tdown"></span><div class="t"><div class="lbl down">Falls below</div><div class="tp">92,500.00</div></div><span class="switch on"></span></div>
+          <div class="track"><i style="width:48%;background:var(--down)"></i></div>
+          <div class="meta"><span>Now 97,412.35 · 5.04% to go</span><span>Nov 11</span></div>
+        </div>
+        <div class="group">Triggered tab preview</div>
+        <div class="acard">
+          <div class="r1"><span class="av up" data-ic="check"></span><div class="t"><div class="lbl up">Rose above</div><div class="tp">98,000.00</div></div></div>
+          <div class="meta"><span>Hit 98,000.12 on Nov 12, 14:32</span></div>
+          <div class="acts"><button class="tbtn filled"><i data-ic="replay"></i>Reactivate</button><button class="tbtn tonal"><i data-ic="del"></i>Delete</button></div>
+        </div>
+      </div>
+      <button class="efab"><i data-ic="plus"></i>New alert</button>
+    </div>
+  </div>
+
+  <!-- CREATE -->
+  <div class="screen"><h2>New alert</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content create">
+        <div class="bar back"><button class="ibtn" data-ic="close"></button><h1>New alert</h1></div>
+        <div class="dirpick" data-group>
+          <button class="on"><b><i data-ic="tup"></i>Rises above</b><small>Price goes up through</small></button>
+          <button><b><i data-ic="tdown"></i>Falls below</b><small>Price goes down through</small></button>
+        </div>
+        <div class="display">
+          <div class="v">100000.5<i></i></div>
+          <div class="u">USDT target</div>
+          <div class="ok"><span data-ic="check" style="color:var(--up)"></span>Saves as <b>100,000.50</b> · 2.66% above now</div>
+        </div>
+        <div class="keys"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>.</span><span>0</span><span data-ic="backspace"></span></div>
+        <div class="save">Create alert</div>
+        <div style="height:16px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen"><h2>History</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="bar back"><button class="ibtn" data-ic="back"></button><h1>History</h1></div>
+        <div class="group">Today</div>
+        <div class="hcard"><span class="av down" data-ic="tdown"></span><div><b>Fell below 96,000.00</b><small>Observed 95,998.40</small></div><div><time>08:15</time><span class="slip">−1.60</span></div></div>
+        <div class="group">Yesterday</div>
+        <div class="hcard"><span class="av up" data-ic="tup"></span><div><b>Rose above 98,000.00</b><small>Observed 98,000.12</small></div><div><time>14:32</time><span class="slip">+0.12</span></div></div>
+        <div class="hcard"><span class="av up" data-ic="tup"></span><div><b>Rose above 97,500.00</b><small>Observed 97,503.88</small></div><div><time>11:07</time><span class="slip">+3.88</span></div></div>
+        <div class="group">Nov 8</div>
+        <div class="hcard"><span class="av down" data-ic="tdown"></span><div><b>Fell below 90,000.00</b><small>Observed 89,991.02</small></div><div><time>22:48</time><span class="slip">−8.98</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <section><h3>What changes from today</h3><ul>
+    <li><b>Price hero card</b> with a tonal change pill (arrow plus sign, not color only).</li>
+    <li><b>Monitoring card</b> with a large switch; the battery action lives inside it, next to the control, as the spec asks.</li>
+    <li><b>OHLC as a labeled grid</b> instead of one text line.</li>
+    <li>Navigation stays in the top bar (icons instead of text buttons).</li>
+  </ul></section>
+  <section><h3>Beyond the spec (decide before Phase 3)</h3><ul>
+    <li><b>"Next alerts" card</b> on Home with distance to target.</li>
+    <li><b>Alerts as filter chips</b> (Active, Triggered, Disabled) instead of three stacked lists.</li>
+    <li><b>Full-screen create</b> with an in-app keypad and "Rises above / Falls below" wording.</li>
+    <li><b>Slippage</b> (observed minus target) in History.</li>
+  </ul></section>
+</div>
+<script src="shared.js"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype A · Ticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+:root {
+  --font: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --page: #E6E9ED; --bg: #FFFFFF; --surface: #F3F5F7; --surface2: #E7EBEF; --text: #0F1419; --muted: #5B6672; --line: #E1E5EA;
+  --up: #0E9F6E; --down: #DC2648; --accent: #F7931A; --onaccent: #1F1300; --warn: #A15C07; --warnbg: #FDF1DC; --bezel: #15181C;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #040608; --bg: #0B0E11; --surface: #141920; --surface2: #1D242D; --text: #E8EDF2; --muted: #8A96A3; --line: #222A33;
+  --up: #2EBD85; --down: #F6465D; --accent: #F7931A; --onaccent: #1F1300; --warn: #F5B547; --warnbg: #2A2010; --bezel: #262B32;
+} }
+:root[data-theme="dark"] {
+  --page: #040608; --bg: #0B0E11; --surface: #141920; --surface2: #1D242D; --text: #E8EDF2; --muted: #8A96A3; --line: #222A33;
+  --up: #2EBD85; --down: #F6465D; --accent: #F7931A; --onaccent: #1F1300; --warn: #F5B547; --warnbg: #2A2010; --bezel: #262B32;
+}
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.pad { padding: 0 16px; }
+.head { display: flex; align-items: center; justify-content: space-between; padding: 6px 16px 2px; }
+.pair { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+.live { font-size: 11px; font-weight: 600; color: var(--up); display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 99px; background: color-mix(in srgb, var(--up) 14%, transparent); }
+.live i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, var(--up) 25%, transparent); }
+.stale { color: var(--warn); background: var(--warnbg); }
+.ibtn { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
+.price { font-family: var(--mono); font-size: 36px; font-weight: 600; letter-spacing: -.02em; padding: 2px 16px 0; }
+.price small { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: 6px; letter-spacing: 0; }
+.chg { display: flex; gap: 8px; align-items: center; padding: 4px 16px 12px; font-family: var(--mono); font-size: 14px; font-weight: 600; color: var(--up); }
+.chg .ic { width: 18px; height: 18px; }
+.chg span { color: var(--muted); font-weight: 400; font-family: var(--font); font-size: 12px; }
+.mon { margin: 0 12px; padding: 10px 12px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; gap: 10px; }
+.mon .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); flex: none; }
+.mon div { flex: 1; }
+.mon b { display: block; font-size: 13px; font-weight: 600; }
+.mon small { color: var(--muted); font-size: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.btn .ic { width: 16px; height: 16px; }
+.btn.line { border: 1px solid var(--line); background: var(--bg); }
+.btn.acc { background: var(--accent); color: var(--onaccent); }
+.warn { margin: 8px 12px 0; padding: 8px 10px 8px 12px; border-radius: 12px; background: var(--warnbg); color: var(--warn); display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+.warn span { flex: 1; color: var(--text); }
+.warn button { font-weight: 700; color: var(--warn); font-size: 12.5px; }
+.tabs { display: flex; gap: 4px; padding: 14px 12px 6px; }
+.tabs button { flex: 1; padding: 7px 0; border-radius: 8px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.tabs button.on { background: var(--surface2); color: var(--text); font-weight: 600; }
+.ohlc { font-family: var(--mono); font-size: 10.5px; color: var(--muted); padding: 4px 16px 2px; display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.ohlc b { color: var(--text); font-weight: 500; }
+.chartbox { padding: 4px 4px 0 8px; }
+.nav { flex: none; height: 64px; display: flex; border-top: 1px solid var(--line); background: var(--bg); }
+.nav a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; color: var(--muted); font-weight: 500; position: relative; }
+.nav a.on { color: var(--accent); }
+.badge { position: absolute; top: 9px; left: calc(50% + 6px); font-size: 9.5px; font-weight: 700; background: var(--accent); color: var(--onaccent); border-radius: 99px; padding: 1px 5px; }
+.title { font-size: 22px; font-weight: 700; padding: 8px 16px 4px; }
+.sub { color: var(--muted); font-size: 12.5px; padding: 0 16px 8px; }
+.sec { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 16px 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.al { display: flex; align-items: center; gap: 12px; padding: 10px 16px; position: relative; background: var(--bg); }
+.al + .al { border-top: 1px solid var(--line); }
+.al .dir { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.dir.above { color: var(--up); background: color-mix(in srgb, var(--up) 13%, transparent); }
+.dir.below { color: var(--down); background: color-mix(in srgb, var(--down) 13%, transparent); }
+.al .t { flex: 1; min-width: 0; }
+.al .t b { font-family: var(--mono); font-size: 15px; font-weight: 600; display: block; }
+.al .t b em { font-style: normal; font-family: var(--font); font-size: 12px; color: var(--muted); font-weight: 500; margin-right: 4px; }
+.al .t small { font-size: 12px; color: var(--muted); }
+.al.off { opacity: .55; }
+.dist { height: 3px; border-radius: 3px; background: var(--surface2); margin-top: 6px; overflow: hidden; }
+.dist i { display: block; height: 100%; background: var(--muted); border-radius: 3px; }
+.switch { width: 40px; height: 24px; border-radius: 99px; background: var(--surface2); position: relative; flex: none; transition: background .15s; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform .15s, background .15s; }
+.switch.on { background: var(--accent); }
+.switch.on::after { transform: translateX(16px); background: #fff; }
+.swipe { position: relative; overflow: hidden; }
+.swipe .del { position: absolute; inset: 0 0 0 auto; width: 84px; background: var(--down); color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+.swipe .al { transform: translateX(-84px); }
+.fab { position: absolute; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-radius: 16px; background: var(--accent); color: var(--onaccent); font-weight: 700; font-size: 14px; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 20px 20px 0 0; padding: 8px 16px 12px; }
+.handle { width: 36px; height: 4px; border-radius: 4px; background: var(--line); margin: 0 auto 12px; }
+.sheet h3 { font-size: 17px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.seg { display: flex; background: var(--surface); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+.seg button { flex: 1; padding: 9px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--muted); display: flex; justify-content: center; align-items: center; gap: 4px; }
+.seg button.on { background: var(--bg); color: var(--up); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+.field { border: 1.5px solid var(--accent); border-radius: 12px; padding: 8px 12px; }
+.field label { font-size: 11px; color: var(--accent); font-weight: 600; }
+.field div { font-family: var(--mono); font-size: 22px; font-weight: 600; display: flex; align-items: center; }
+.field div i { width: 2px; height: 24px; background: var(--accent); margin-left: 2px; }
+.field div span { margin-left: auto; font-size: 12px; color: var(--muted); font-weight: 500; }
+.confirm { font-size: 12.5px; color: var(--muted); padding: 8px 2px 0; display: flex; justify-content: space-between; }
+.confirm b { color: var(--text); font-family: var(--mono); font-weight: 600; }
+.chips { display: flex; gap: 6px; margin: 12px 0; }
+.chips button { border: 1px solid var(--line); border-radius: 99px; padding: 6px 10px; font-size: 12px; font-family: var(--mono); }
+.wide { width: 100%; justify-content: center; padding: 13px; border-radius: 12px; font-size: 15px; }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; }
+.keys span { background: var(--surface); border-radius: 8px; padding: 11px 0; text-align: center; font-size: 18px; font-family: var(--mono); display: flex; justify-content: center; }
+.day { padding: 16px 16px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hi { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 16px; }
+.hi .dir { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; }
+.hi + .hi { border-top: 1px solid var(--line); }
+.hi .t b { font-family: var(--mono); font-size: 14px; font-weight: 600; display: block; }
+.hi .t small { font-size: 12px; color: var(--muted); }
+.hi .t small em { font-style: normal; font-family: var(--mono); color: var(--text); }
+.hi time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>A · Ticker</h1>
+    <p>Dense, trading-terminal look. Monospace numbers, everything on one Home screen, bottom navigation between Market, Alerts and History. Monitoring and warnings stay compact so the chart keeps most of the screen.</p>
+  </div>
+  <button class="toggle" data-theme-toggle>Light / dark</button>
+</div>
+
+<div class="row">
+  <!-- HOME -->
+  <div class="screen"><h2>Home</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="head">
+          <div class="pair">BTC/USDT <span class="live"><i></i>Live</span></div>
+          <button class="ibtn" data-ic="more"></button>
+        </div>
+        <div class="price">97,412.35<small>USDT</small></div>
+        <div class="chg"><i data-ic="tup"></i>+2.41% <span>24h</span></div>
+        <div class="mon">
+          <i class="dot"></i>
+          <div><b>Monitoring running</b><small>2 active alerts</small></div>
+          <button class="btn line"><i data-ic="stop"></i>Stop</button>
+        </div>
+        <div class="warn"><i data-ic="battery"></i><span>Battery optimization can pause monitoring</span><button>Allow</button></div>
+        <div class="tabs" data-group><button>5m</button><button>15m</button><button class="on">1h</button><button>1d</button></div>
+        <div class="ohlc" data-ohlc="<span>Nov 13, 18:00</span><span>O <b>{o}</b></span><span>H <b>{h}</b></span><span>L <b>{l}</b></span><span>C <b>{c}</b></span><span>V <b>{v}</b></span>"></div>
+        <div class="chartbox" data-chart='{"w":330,"h":300,"seed":11}'></div>
+      </div>
+      <nav class="nav"><a class="on"><i data-ic="chart"></i>Market</a><a><i data-ic="bell"></i>Alerts<b class="badge">2</b></a><a><i data-ic="history"></i>History</a></nav>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="screen"><h2>Alerts</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content" id="alerts">
+        <div class="title">Alerts</div>
+        <div class="sub">Current price <span class="mono">97,412.35</span></div>
+        <div class="sec"><span>Active · 2</span></div>
+        <div class="al"><span class="dir above" data-ic="up"></span>
+          <div class="t"><b><em>Above</em>100,000.00</b><small>2.66% away · created Nov 13</small><div class="dist"><i style="width:74%;background:var(--up)"></i></div></div>
+          <span class="switch on"></span></div>
+        <div class="al"><span class="dir below" data-ic="down"></span>
+          <div class="t"><b><em>Below</em>92,500.00</b><small>5.04% away · created Nov 11</small><div class="dist"><i style="width:48%;background:var(--down)"></i></div></div>
+          <span class="switch on"></span></div>
+        <div class="sec"><span>Triggered · 1</span></div>
+        <div class="al"><span class="dir above" data-ic="up"></span>
+          <div class="t"><b><em>Above</em>98,000.00</b><small>Hit 98,000.12 · Nov 12, 14:32</small></div>
+          <button class="btn line"><i data-ic="replay"></i>Reactivate</button></div>
+        <div class="sec"><span>Disabled · 1</span><span style="text-transform:none;letter-spacing:0">swipe to delete</span></div>
+        <div class="swipe"><div class="del"><span data-ic="del"></span></div>
+          <div class="al off"><span class="dir below" data-ic="down"></span>
+            <div class="t"><b><em>Below</em>85,000.00</b><small>Off · created Nov 2</small></div>
+            <span class="switch"></span></div></div>
+      </div>
+      <button class="fab" style="bottom:80px"><i data-ic="plus"></i>New alert</button>
+      <nav class="nav"><a><i data-ic="chart"></i>Market</a><a class="on"><i data-ic="bell"></i>Alerts<b class="badge">2</b></a><a><i data-ic="history"></i>History</a></nav>
+    </div>
+  </div>
+
+  <!-- CREATE -->
+  <div class="screen"><h2>New alert</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content" data-clone="alerts"></div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <h3>New alert <span data-ic="close" style="color:var(--muted)"></span></h3>
+        <div class="seg" data-group><button class="on"><i data-ic="up"></i>Above</button><button><i data-ic="down"></i>Below</button></div>
+        <div class="field"><label>Target price</label><div>100000.50<i></i><span>USDT</span></div></div>
+        <div class="confirm"><span>Saves as <b>100,000.50</b></span><span>+2.66% from now</span></div>
+        <div class="chips"><button>+1%</button><button>+2%</button><button>+5%</button><button>100,000</button></div>
+        <button class="btn acc wide">Create alert</button>
+        <div class="keys"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>.</span><span>0</span><span data-ic="backspace"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen"><h2>History</h2>
+    <div class="phone">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="title">History</div>
+        <div class="sub">Triggered alerts, newest first</div>
+        <div class="day">Today</div>
+        <div class="hi"><span class="dir below" data-ic="down"></span>
+          <div class="t"><b>Below 96,000.00</b><small>Observed <em>95,998.40</em></small></div><time>08:15</time></div>
+        <div class="day">Yesterday</div>
+        <div class="hi"><span class="dir above" data-ic="up"></span>
+          <div class="t"><b>Above 98,000.00</b><small>Observed <em>98,000.12</em></small></div><time>14:32</time></div>
+        <div class="hi"><span class="dir above" data-ic="up"></span>
+          <div class="t"><b>Above 97,500.00</b><small>Observed <em>97,503.88</em></small></div><time>11:07</time></div>
+        <div class="day">Nov 8</div>
+        <div class="hi"><span class="dir below" data-ic="down"></span>
+          <div class="t"><b>Below 90,000.00</b><small>Observed <em>89,991.02</em></small></div><time>22:48</time></div>
+      </div>
+      <nav class="nav"><a><i data-ic="chart"></i>Market</a><a><i data-ic="bell"></i>Alerts<b class="badge">2</b></a><a class="on"><i data-ic="history"></i>History</a></nav>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <section><h3>What changes from today</h3><ul>
+    <li><b>Bottom navigation</b> replaces the Alerts and History text buttons in the top bar.</li>
+    <li><b>Connection status becomes a pill</b> next to the pair (Live, Reconnecting, Stale 14s) instead of a text line.</li>
+    <li><b>Monospace prices</b>, so digits do not jump while the price updates every second.</li>
+    <li><b>Monitoring and battery</b> sit in two compact rows above the chart.</li>
+  </ul></section>
+  <section><h3>Beyond the spec (decide before Phase 3)</h3><ul>
+    <li><b>Distance to target</b> (%) and a progress bar on each active alert.</li>
+    <li><b>Quick chips</b> (+1%, +2%, round number) in the create sheet.</li>
+    <li><b>Swipe to delete</b>; the spec only asks for a delete action.</li>
+    <li><b>History grouped by day</b>; order stays newest first.</li>
+    <li>Icons need <b>contentDescription</b> (open Phase 2 task).</li>
+  </ul></section>
+</div>
+<script src="shared.js"></script>
+</body>
+</html>
