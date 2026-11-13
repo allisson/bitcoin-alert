@@ -481,7 +481,7 @@ Subscriptions:
 | Home not visible, monitoring running | `btcusdt@ticker` |
 | Home not visible, monitoring stopped | None — the connection is closed |
 
-"Home not visible" includes the Alerts and History screens and the application in the background.
+"Home not visible" includes the Alerts and History screens and the application in the background. Home becoming not visible takes effect after one second, and becoming visible again within it cancels it: a configuration change (rotation, theme, font size) stops and restarts the activity, and must not close and reopen the connection.
 
 With no stream needed, the client is in an internal `Idle` state (never shown in the UI): the connection is closed on purpose, and the backoff, the dead connection watchdog and the network callback do nothing. It leaves `Idle` (to `Connecting`) only when the desired stream set becomes non-empty. Entering `Idle` resets the backoff counter (§2.8): a deliberate close is not a failure, so the first attempt after leaving `Idle` runs without delay. Leaving `Idle` takes a user navigation, so this cannot approach Binance's attempt limit.
 
@@ -736,7 +736,7 @@ Testing must cover the critical application behavior.
 - `previousPrice` kept across reconnections and reset on monitoring start or service restart.
 - Alert state transitions (trigger, disable, enable, reactivate).
 - Target price validation: `100000.50` and `100000,50` both parse to `100000.50` in pt-BR and en-US; `100.000,50`, `100,000.50`, more than one separator, more than 2 decimal places (including trailing zeros: `1.000`, `100,000`), zero, `.50` and `100.` are rejected; ` 100.50 ` (surrounding spaces) and `0100` are accepted; `100` is normalized to `100.00`.
-- 24-hour change display: `-3.829` shows `-3.83` with a down arrow; `-0.004` shows `0.00` with no sign and no arrow.
+- 24-hour change display, with the device locale's decimal separator: `-3.829` shows `-3.83` (pt-BR `-3,83`) with a down arrow; `-0.004` shows `0.00` with no sign and no arrow.
 - Candle volume display: `"336.78983000"` shows `336.78983`, with the device locale's decimal separator (pt-BR `336,78983`).
 - Alert lists ordered `createdAt DESC, id DESC` (§4); history ordered `triggeredAt DESC, id DESC` (§2.7).
 - Timeframe: `1h` with nothing stored; a selected timeframe is restored from DataStore.

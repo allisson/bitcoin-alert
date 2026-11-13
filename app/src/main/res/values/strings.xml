@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">Bitcoin Alert</string>
+    <string name="alerts">Alerts</string>
+    <string name="history">History</string>
+    <string name="back">Back</string>
+    <string name="pair">BTC/USDT</string>
+    <string name="price_placeholder">—</string>
+    <string name="connecting">Connecting</string>
+    <string name="connected">Connected</string>
+    <string name="reconnecting">Reconnecting</string>
+    <string name="stale">No price update for over 10 seconds</string>
+    <string name="candles_error">Couldn\'t load candles</string>
+    <string name="retry">Retry</string>
+    <string name="candles_summary">%1$d candles, last close %2$s</string>
+    <string name="alerts_placeholder">Alert management arrives in a later version.</string>
+    <string name="history_placeholder">Alert history arrives in a later version.</string>
 </resources>
