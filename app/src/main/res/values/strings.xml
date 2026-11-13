@@ -11,7 +11,7 @@
     <string name="stale">No price update for over 10 seconds</string>
     <string name="candles_error">Couldn\'t load candles</string>
     <string name="retry">Retry</string>
-    <string name="candles_summary">%1$d candles, last close %2$s</string>
+    <string name="candle_ohlc">%1$s  O %2$s  H %3$s  L %4$s  C %5$s  V %6$s</string>
     <string name="alerts_placeholder">Alert management arrives in a later version.</string>
     <string name="history_placeholder">Alert history arrives in a later version.</string>
 </resources>

@@ -140,28 +140,28 @@
 - [x] Format prices with the device locale and exactly 2 decimal places.
 - [x] Implement navigation from Home to Alerts and History.
 - [x] Wire Home visibility (lifecycle `STARTED` and current route) into the stream set derivation (Phase 1): leaving Home with monitoring stopped closes the connection (`spec.md` §3.3).
-- [ ] Apply the dark and light themes, following the system setting; validate both, including chart and price-change colors.
+- [x] Apply the dark and light themes, following the system setting; validate both, including chart and price-change colors.
 - [x] Call `enableEdgeToEdge()` and apply system bar insets on Home, Alerts and History (mandatory with `targetSdk` 35+; `spec.md` §4).
 - [ ] Validate layouts on different screen sizes and at the largest system font size.
 - [ ] Give icon-only buttons a `contentDescription` (`spec.md` §4). Phase 2 uses text buttons only (no icon library), so this applies from the first icon.
 
 ### Candlestick chart
 
-- [ ] Spike before the chart tasks: check how Vico draws volume bars below the candles sharing the time axis (Vico layers may share one drawing area). Options: two charts with synchronized scroll and zoom, or bars in the chart's bottom band on their own axis. Record the choice in `spec.md` §2.3.
-- [ ] Integrate Vico.
-- [ ] Implement candlestick visualization.
-- [ ] Load historical candles.
+- [x] Spike before the chart tasks: check how Vico draws volume bars below the candles sharing the time axis (Vico layers may share one drawing area). Options: two charts with synchronized scroll and zoom, or bars in the chart's bottom band on their own axis. Record the choice in `spec.md` §2.3 (one chart: candles on the start axis, volume on the end axis).
+- [x] Integrate Vico.
+- [x] Implement candlestick visualization.
+- [x] Load historical candles.
 - [x] Create the single process-scoped DataStore instance (`spec.md` §3.5); Phase 4 reuses it.
 - [x] Implement timeframe selection (default `1h`, persisted in DataStore), with unit tests.
-- [ ] Implement 5m chart.
-- [ ] Implement 15m chart.
-- [ ] Implement 1h chart.
-- [ ] Implement 1d chart.
-- [ ] Implement horizontal navigation within the loaded candles (200 from REST plus the appended live ones; `spec.md` §2.3).
+- [x] Implement 5m chart.
+- [x] Implement 15m chart.
+- [x] Implement 1h chart.
+- [x] Implement 1d chart.
+- [x] Implement horizontal navigation within the loaded candles (200 from REST plus the appended live ones; `spec.md` §2.3).
 - [ ] Implement zoom.
-- [ ] Display selected candle OHLC values.
-- [ ] Display candle volume as bars below the candles (kline `v`, in BTC with locale formatting and trailing zeros removed; the ticker's 24-hour volume is not used; `spec.md` §2.1), with unit tests for the formatting.
-- [ ] Implement live candle updates: same `openTime` replaces the last candle, newer appends, older is discarded (`spec.md` §2.3).
+- [x] Display selected candle OHLC values.
+- [x] Display candle volume as bars below the candles (kline `v`, in BTC with locale formatting and trailing zeros removed; the ticker's 24-hour volume is not used; `spec.md` §2.1), with unit tests for the formatting.
+- [x] Implement live candle updates: same `openTime` replaces the last candle, newer appends, older is discarded (`spec.md` §2.3).
 - [x] Load candles as subscribe → REST → apply buffered updates (REST starts only once the subscription is in effect: the connection with the stream in its URL is open, or the `SUBSCRIBE` response with the matching `id` has arrived), on start, timeframe change, reconnection and Home becoming visible again, only while Home is visible (`spec.md` §3.3), with unit tests for the merge (buffered and live) and the reload triggers.
 
 **Acceptance criteria:**

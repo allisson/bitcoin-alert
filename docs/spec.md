@@ -140,6 +140,8 @@ The chart must support:
 - Selected candle OHLC information.
 - Real-time updates from the kline stream: a message with the same `openTime` as the last candle replaces it, a newer one is appended (a new period started), an older one is discarded. The same rule merges the buffered updates after a REST load (§3.3). Appended candles grow the series beyond 200; the next reload trims it back.
 
+Chart layout (Vico): one chart with two layers sharing the time axis, so scroll and zoom need no synchronization (two Vico charts cannot share one scroll state). Candles use the start axis with the intrinsic range of the loaded candles; volume bars use the end axis, which is not drawn, with the range `0` to 4 × the highest volume, so the bars fill the bottom quarter. The _x_ value is the candle `openTime` in epoch milliseconds; time labels use the device time zone and locale (`HH:mm`, the short date for `1d`). The chart opens at the last candle showing about 60 candles; zoom goes from all loaded candles to about 15. A new candle scrolls the chart only when it showed the last candle before the update. Tapping a candle selects it (tapping it again clears the selection); the line above the chart shows the selected candle's time, OHLC and volume, or the last candle when none is selected.
+
 ### 2.4 Chart Timeframes
 
 The following timeframes must be supported:
