@@ -142,7 +142,7 @@
 - [x] Wire Home visibility (lifecycle `STARTED` and current route) into the stream set derivation (Phase 1): leaving Home with monitoring stopped closes the connection (`spec.md` §3.3).
 - [x] Apply the dark and light themes, following the system setting; validate both, including chart and price-change colors.
 - [x] Call `enableEdgeToEdge()` and apply system bar insets on Home, Alerts and History (mandatory with `targetSdk` 35+; `spec.md` §4).
-- [ ] Validate layouts on different screen sizes and at the largest system font size.
+- [x] Validate layouts on different screen sizes and at the largest system font size.
 - [ ] Give icon-only buttons a `contentDescription` (`spec.md` §4). Phase 2 uses text buttons only (no icon library), so this applies from the first icon.
 
 ### Candlestick chart
@@ -158,7 +158,7 @@
 - [x] Implement 1h chart.
 - [x] Implement 1d chart.
 - [x] Implement horizontal navigation within the loaded candles (200 from REST plus the appended live ones; `spec.md` §2.3).
-- [ ] Implement zoom.
+- [x] Implement zoom.
 - [x] Display selected candle OHLC values.
 - [x] Display candle volume as bars below the candles (kline `v`, in BTC with locale formatting and trailing zeros removed; the ticker's 24-hour volume is not used; `spec.md` §2.1), with unit tests for the formatting.
 - [x] Implement live candle updates: same `openTime` replaces the last candle, newer appends, older is discarded (`spec.md` §2.3).
