@@ -1,27 +1,31 @@
-# Compiled class file
+# Gradle
+.gradle/
+build/
+.kotlin/
+
+# Local configuration (SDK path, signing passwords)
+local.properties
+
+# Signing keys: never commit them (AGENTS.md)
+*.jks
+*.keystore
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Build outputs and logs
+*.apk
+*.aab
+*.ap_
+*.dex
 *.class
-
-# Log file
 *.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
 
-# Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
-.kotlin/
+# macOS
+.DS_Store

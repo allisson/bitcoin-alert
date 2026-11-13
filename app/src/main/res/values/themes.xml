@@ -1,0 +1,4 @@
+<resources>
+    <!-- Window theme only (background before Compose draws); colors live in ui/theme. -->
+    <style name="Theme.BitcoinAlert" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

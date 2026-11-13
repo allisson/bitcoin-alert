@@ -65,7 +65,7 @@ The main screen must display:
 - Available chart timeframes.
 - Access to alert management and alert history.
 
-The interface should be minimal, with dark and light themes that follow the system setting (`isSystemInDarkTheme()`); there is no in-app theme selector.
+The interface should be minimal, with dark and light themes that follow the system setting (`isSystemInDarkTheme()`); there is no in-app theme selector. The Material 3 palette is fixed: no dynamic color (Material You), so the price-change colors look the same on every device.
 
 The user interface is in English only; there are no translations. Number and date formatting still follow the device locale (§2.5, §2.7).
 

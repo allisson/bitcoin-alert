@@ -25,35 +25,35 @@
 
 ### Project setup
 
-- [ ] Create the Android project.
-- [ ] Configure Kotlin and Gradle Kotlin DSL.
-- [ ] Configure the application ID `io.github.allisson.bitcoinalert` (`spec.md` §6). It is registered in Phase 6 and never changes after the first release. The debug build type uses `applicationIdSuffix = ".debug"`, so debug and release builds coexist on the same device.
-- [ ] Configure `minSdk = 26` and `targetSdk`/`compileSdk = 37` (`spec.md` §3.1).
-- [ ] Configure Jetpack Compose.
-- [ ] Configure the application theme: dark and light, following the system setting (`spec.md` §2.1).
-- [ ] Keep UI strings in English only, in `res/values/strings.xml`, with no translations (`spec.md` §2.1).
-- [ ] Default `versionCode = 1` and `versionName = "0.0.0-dev"` for builds without a version tag (`spec.md` §6).
-- [ ] Establish the initial project package structure.
-- [ ] Expand the existing README.md with project information.
-- [ ] Replace `.gitignore` with the Android template: the current one ignores `*.jar` (drops `gradle/wrapper/gradle-wrapper.jar` and breaks CI) and lacks `build/`, `.gradle/`, `local.properties`, `*.jks`, `*.keystore`.
+- [x] Create the Android project.
+- [x] Configure Kotlin and Gradle Kotlin DSL (AGP 9 built-in Kotlin; the Kotlin version comes from the catalog's Kotlin plugins).
+- [x] Configure the application ID `io.github.allisson.bitcoinalert` (`spec.md` §6). It is registered in Phase 6 and never changes after the first release. The debug build type uses `applicationIdSuffix = ".debug"`, so debug and release builds coexist on the same device.
+- [x] Configure `minSdk = 26` and `targetSdk`/`compileSdk = 37` (`spec.md` §3.1).
+- [x] Configure Jetpack Compose.
+- [x] Configure the application theme: dark and light, following the system setting, with a fixed Material 3 palette and no dynamic color (`spec.md` §2.1).
+- [x] Keep UI strings in English only, in `res/values/strings.xml`, with no translations (`spec.md` §2.1).
+- [x] Default `versionCode = 1` and `versionName = "0.0.0-dev"` for builds without a version tag (`spec.md` §6).
+- [x] Establish the initial project package structure: only the packages with files (`MainActivity.kt`, `ui/theme/`); each phase creates the packages it fills (`spec.md` §3.2), since Git does not track empty directories.
+- [x] Expand the existing README.md with project information (description, requirements, build and test commands; installation docs in Phase 6).
+- [x] Replace `.gitignore` with the Android template: the current one ignores `*.jar` (drops `gradle/wrapper/gradle-wrapper.jar` and breaks CI) and lacks `build/`, `.gradle/`, `local.properties`, `*.jks`, `*.keystore`.
 
 ### Dependencies
 
-- [ ] Add Kotlin Coroutines and Flow.
-- [ ] Add OkHttp.
-- [ ] Add kotlinx.serialization.
-- [ ] Add Room.
-- [ ] Add DataStore.
-- [ ] Add Vico chart library.
-- [ ] Add test dependencies: JUnit 4 (Robolectric's runner is JUnit 4), `kotlinx-coroutines-test`, Robolectric, OkHttp `MockWebServer` (`spec.md` §3.1).
-- [ ] Configure dependency version management in `gradle/libs.versions.toml`.
+- [x] Add Kotlin Coroutines and Flow.
+- [x] Add OkHttp.
+- [x] Add kotlinx.serialization.
+- [x] Add Room (runtime only; KSP with `room-compiler` and the Room Gradle plugin are added in Phase 3, with the first entity).
+- [x] Add DataStore.
+- [x] Add Vico chart library.
+- [x] Add test dependencies: JUnit 4 (Robolectric's runner is JUnit 4), `kotlinx-coroutines-test`, Robolectric, OkHttp `MockWebServer` (`spec.md` §3.1).
+- [x] Configure dependency version management in `gradle/libs.versions.toml`.
 
 ### CI foundation
 
-- [ ] Create the GitHub Actions workflow (`.github/workflows/ci.yml`), triggered on pull requests and on pushes to `main`.
-- [ ] Configure Android build environment with JDK 21 (Temurin, `actions/setup-java` with `distribution: temurin`, `java-version: 21`), matching `.tool-versions` (`spec.md` §3.1).
-- [ ] Add a Debug build job.
-- [ ] Add JVM test execution (`./gradlew testDebugUnitTest`: unit tests and Robolectric integration tests; `spec.md` §3.1).
+- [x] Create the GitHub Actions workflow (`.github/workflows/ci.yml`), triggered on pull requests and on pushes to `main`.
+- [x] Configure Android build environment with JDK 21 (Temurin, `actions/setup-java` with `distribution: temurin`, `java-version: 21`), matching `.tool-versions` (`spec.md` §3.1).
+- [x] Add a Debug build job.
+- [x] Add JVM test execution (`./gradlew testDebugUnitTest`: unit tests and Robolectric integration tests; `spec.md` §3.1).
 - [ ] Validate the initial build.
 
 **Acceptance criteria:**
@@ -179,7 +179,7 @@
 
 ### Database
 
-- [ ] Configure Room.
+- [ ] Configure Room: add KSP with `room-compiler` and the Room Gradle plugin (not added in Phase 0).
 - [ ] Create `PriceAlertEntity` (including `activationCycle`).
 - [ ] Create `AlertHistoryEntity`.
 - [ ] Implement alert DAO.
@@ -428,6 +428,7 @@ Unit tests are written with each feature, in the phase that implements it.
 
 ### Documentation
 
+- [ ] Create the adaptive launcher icon (Phase 0 ships the system default icon).
 - [ ] Write installation instructions.
 - [ ] Document application permissions.
 - [ ] Document monitoring behavior.
