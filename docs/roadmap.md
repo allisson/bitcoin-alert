@@ -130,20 +130,20 @@
 
 ### Main screen
 
-- [ ] Implement the main screen using Jetpack Compose.
-- [ ] Display the current BTCUSDT price.
-- [ ] Display the 24-hour percentage change with 2 decimal places (`HALF_UP`), sign and arrow, not only color; a value that rounds to zero shows `0.00%` with no sign or arrow (`spec.md` §2.1, §4), with unit tests.
-- [ ] Display Binance connection status.
-- [ ] Implement loading states.
-- [ ] Implement error states, including a retry action when the candle REST load fails (`spec.md` §3.3).
-- [ ] Implement stale data indication (last ticker message older than 10 seconds, in any connection state; kline messages and control responses do not refresh it), and the `—` placeholder before the first price (`spec.md` §2.1), with unit tests.
-- [ ] Format prices with the device locale and exactly 2 decimal places.
-- [ ] Implement navigation from Home to Alerts and History.
-- [ ] Wire Home visibility (lifecycle `STARTED` and current route) into the stream set derivation (Phase 1): leaving Home with monitoring stopped closes the connection (`spec.md` §3.3).
+- [x] Implement the main screen using Jetpack Compose.
+- [x] Display the current BTCUSDT price.
+- [x] Display the 24-hour percentage change with 2 decimal places (`HALF_UP`), sign and arrow, not only color; a value that rounds to zero shows `0.00%` with no sign or arrow (`spec.md` §2.1, §4), with unit tests.
+- [x] Display Binance connection status.
+- [x] Implement loading states.
+- [x] Implement error states, including a retry action when the candle REST load fails (`spec.md` §3.3).
+- [x] Implement stale data indication (last ticker message older than 10 seconds, in any connection state; kline messages and control responses do not refresh it), and the `—` placeholder before the first price (`spec.md` §2.1), with unit tests.
+- [x] Format prices with the device locale and exactly 2 decimal places.
+- [x] Implement navigation from Home to Alerts and History.
+- [x] Wire Home visibility (lifecycle `STARTED` and current route) into the stream set derivation (Phase 1): leaving Home with monitoring stopped closes the connection (`spec.md` §3.3).
 - [ ] Apply the dark and light themes, following the system setting; validate both, including chart and price-change colors.
-- [ ] Call `enableEdgeToEdge()` and apply system bar insets on Home, Alerts and History (mandatory with `targetSdk` 35+; `spec.md` §4).
+- [x] Call `enableEdgeToEdge()` and apply system bar insets on Home, Alerts and History (mandatory with `targetSdk` 35+; `spec.md` §4).
 - [ ] Validate layouts on different screen sizes and at the largest system font size.
-- [ ] Give icon-only buttons a `contentDescription` (`spec.md` §4).
+- [ ] Give icon-only buttons a `contentDescription` (`spec.md` §4). Phase 2 uses text buttons only (no icon library), so this applies from the first icon.
 
 ### Candlestick chart
 
@@ -151,8 +151,8 @@
 - [ ] Integrate Vico.
 - [ ] Implement candlestick visualization.
 - [ ] Load historical candles.
-- [ ] Create the single process-scoped DataStore instance (`spec.md` §3.5); Phase 4 reuses it.
-- [ ] Implement timeframe selection (default `1h`, persisted in DataStore), with unit tests.
+- [x] Create the single process-scoped DataStore instance (`spec.md` §3.5); Phase 4 reuses it.
+- [x] Implement timeframe selection (default `1h`, persisted in DataStore), with unit tests.
 - [ ] Implement 5m chart.
 - [ ] Implement 15m chart.
 - [ ] Implement 1h chart.
@@ -162,7 +162,7 @@
 - [ ] Display selected candle OHLC values.
 - [ ] Display candle volume as bars below the candles (kline `v`, in BTC with locale formatting and trailing zeros removed; the ticker's 24-hour volume is not used; `spec.md` §2.1), with unit tests for the formatting.
 - [ ] Implement live candle updates: same `openTime` replaces the last candle, newer appends, older is discarded (`spec.md` §2.3).
-- [ ] Load candles as subscribe → REST → apply buffered updates (REST starts only once the subscription is in effect: the connection with the stream in its URL is open, or the `SUBSCRIBE` response with the matching `id` has arrived), on start, timeframe change, reconnection and Home becoming visible again, only while Home is visible (`spec.md` §3.3), with unit tests for the merge (buffered and live) and the reload triggers.
+- [x] Load candles as subscribe → REST → apply buffered updates (REST starts only once the subscription is in effect: the connection with the stream in its URL is open, or the `SUBSCRIBE` response with the matching `id` has arrived), on start, timeframe change, reconnection and Home becoming visible again, only while Home is visible (`spec.md` §3.3), with unit tests for the merge (buffered and live) and the reload triggers.
 
 **Acceptance criteria:**
 
