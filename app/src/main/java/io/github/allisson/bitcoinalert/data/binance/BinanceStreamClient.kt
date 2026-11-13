@@ -12,15 +12,23 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 
 private const val TAG = "Binance"
 private const val STREAM_URL = "wss://stream.binance.com:443/stream?streams="
 private const val WATCHDOG_MILLIS = 10_000L
 private const val STABLE_CONNECTION_MILLIS = 60_000L
+private const val COALESCING_WINDOW_MILLIS = 1_000L
 
 /** Wait after the [failures]-th consecutive failure: `min(1 s × 2ⁿ⁻¹, 60 s) × (1 + U[0, 0.2])` (spec.md §2.8). */
 internal fun backoffDelayMillis(failures: Int, random: Random): Long {
@@ -46,7 +54,12 @@ class BinanceStreamClient(
     private val _ticker = MutableStateFlow<Ticker?>(null)
     val ticker: StateFlow<Ticker?> = _ticker.asStateFlow()
 
-    private class Attempt {
+    private val _klineEvents = MutableSharedFlow<KlineEvent>(extraBufferCapacity = 64)
+
+    /** Kline events in the order the connection produced them; not replayed to late collectors. */
+    val klineEvents: SharedFlow<KlineEvent> = _klineEvents.asSharedFlow()
+
+    private class Attempt(val streams: Set<String>) {
         lateinit var connection: WebSocketConnector.Connection
     }
 
@@ -58,6 +71,7 @@ class BinanceStreamClient(
         class Message(val attempt: Attempt, val text: String) : Event
         class Closed(val attempt: Attempt) : Event
         class WatchdogExpired(val attempt: Attempt) : Event
+        class WindowEnded(val attempt: Attempt) : Event
     }
 
     private val events = Channel<Event>(Channel.UNLIMITED)
@@ -68,6 +82,13 @@ class BinanceStreamClient(
     private var failures = 0
     private var retryJob: Job? = null
     private var watchdogJob: Job? = null
+
+    // Subscriptions on the open connection: its URL's streams, then the coalesced SUBSCRIBE/UNSUBSCRIBE.
+    private var subscribed = emptySet<String>()
+    private var nextRequestId = 1L
+    private val pendingSubscribes = mutableMapOf<Long, Set<String>>()
+    private var windowOpen = false
+    private var windowJob: Job? = null
 
     init {
         scope.launch { for (event in events) handle(event) }
@@ -83,15 +104,19 @@ class BinanceStreamClient(
         events.trySend(Event.NetworkAvailable)
     }
 
-    private fun handle(event: Event) {
+    private suspend fun handle(event: Event) {
         when (event) {
             is Event.DesiredStreams -> {
+                (desired - event.streams).mapNotNull(::timeframeOfKlineStream)
+                    .forEach { _klineEvents.emit(KlineEvent.Removed(it)) }
                 desired = event.streams
-                if (desired.isEmpty()) {
-                    enterIdle()
-                } else if (state == Idle) {
-                    state = Connecting
-                    connect()
+                when {
+                    desired.isEmpty() -> enterIdle()
+                    state == Idle -> {
+                        state = Connecting
+                        connect()
+                    }
+                    state == Connected -> syncSubscriptions()
                 }
             }
             Event.NetworkAvailable -> if (state == Connecting || state == Reconnecting) {
@@ -106,26 +131,78 @@ class BinanceStreamClient(
                 state = Connected
                 openedAt = clock()
                 restartWatchdog()
+                subscribed = event.attempt.streams
+                emitInEffect(subscribed)
+                syncSubscriptions()
             }
             is Event.Message -> if (event.attempt === current) onMessage(event.text)
             is Event.Closed -> if (event.attempt === current) connectionLost("closed")
             is Event.WatchdogExpired -> if (event.attempt === current && state == Connected) {
                 connectionLost("no message for 10 s")
             }
+            is Event.WindowEnded -> if (event.attempt === current) {
+                windowOpen = false
+                syncSubscriptions()
+            }
         }
     }
 
-    private fun onMessage(text: String) {
+    private suspend fun onMessage(text: String) {
         restartWatchdog()
         when (val message = parseStreamMessage(text)) {
             is StreamMessage.TickerUpdate -> _ticker.value = Ticker(message.lastPrice, message.changePercent, clock())
-            is StreamMessage.ControlResponse -> if (!message.success) connectionLost("subscription failed: $text")
-            is StreamMessage.KlineUpdate, null -> Unit
+            // Discards klines of a stream no longer desired, e.g. the previous interval.
+            is StreamMessage.KlineUpdate -> if (message.stream in desired) {
+                _klineEvents.emit(KlineEvent.Update(message.timeframe, message.candle))
+            }
+            is StreamMessage.ControlResponse -> if (!message.success) {
+                connectionLost("subscription failed: $text")
+            } else {
+                pendingSubscribes.remove(message.id)?.let { emitInEffect(it intersect subscribed) }
+            }
+            null -> Unit
         }
     }
 
+    private suspend fun emitInEffect(streams: Set<String>) {
+        (streams intersect desired).mapNotNull(::timeframeOfKlineStream)
+            .forEach { _klineEvents.emit(KlineEvent.InEffect(it)) }
+    }
+
+    /**
+     * Sends the difference to the desired set at most once per second (Binance accepts 5 incoming
+     * messages per second): the first change after a quiet second goes out now and opens a window;
+     * changes inside it wait for its end, when only the latest set is compared.
+     */
+    private fun syncSubscriptions() {
+        val attempt = current ?: return
+        if (windowOpen) return
+        val unsubscribe = subscribed - desired
+        val subscribe = desired - subscribed
+        if (unsubscribe.isEmpty() && subscribe.isEmpty()) return
+        if (unsubscribe.isNotEmpty()) request(attempt, "UNSUBSCRIBE", unsubscribe)
+        if (subscribe.isNotEmpty()) pendingSubscribes[request(attempt, "SUBSCRIBE", subscribe)] = subscribe
+        subscribed = desired
+        windowOpen = true
+        windowJob = scope.launch {
+            delay(COALESCING_WINDOW_MILLIS)
+            events.send(Event.WindowEnded(attempt))
+        }
+    }
+
+    private fun request(attempt: Attempt, method: String, streams: Set<String>): Long {
+        val id = nextRequestId++
+        val text = buildJsonObject {
+            put("method", method)
+            putJsonArray("params") { streams.sorted().forEach { add(it) } }
+            put("id", id)
+        }.toString()
+        attempt.connection.send(text)
+        return id
+    }
+
     private fun connect() {
-        val attempt = Attempt()
+        val attempt = Attempt(desired)
         current = attempt
         attempt.connection = connector.connect(
             STREAM_URL + desired.sorted().joinToString("/"),
@@ -145,15 +222,23 @@ class BinanceStreamClient(
         )
     }
 
+    private fun dropConnection() {
+        current = null
+        openedAt = null
+        watchdogJob?.cancel()
+        windowJob?.cancel()
+        windowOpen = false
+        subscribed = emptySet()
+        pendingSubscribes.clear()
+    }
+
     private fun connectionLost(reason: String) {
         Log.w(TAG, "Connection lost: $reason")
         current?.connection?.cancel()
-        current = null
-        watchdogJob?.cancel()
         val upFor = openedAt?.let { clock() - it }
+        dropConnection()
         // A connection that drops before 60 s counts as a failed attempt.
         failures = if (upFor != null && upFor >= STABLE_CONNECTION_MILLIS) 0 else failures + 1
-        openedAt = null
         if (state == Connected) state = Reconnecting
         if (failures == 0) {
             connect()
@@ -168,10 +253,8 @@ class BinanceStreamClient(
 
     private fun enterIdle() {
         retryJob?.cancel()
-        watchdogJob?.cancel()
         current?.connection?.close()
-        current = null
-        openedAt = null
+        dropConnection()
         failures = 0
         state = Idle
     }

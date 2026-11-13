@@ -7,7 +7,12 @@ import io.github.allisson.bitcoinalert.domain.model.ConnectionState.Reconnecting
 import io.github.allisson.bitcoinalert.domain.model.Ticker
 import java.math.BigDecimal
 import kotlin.random.Random
+import io.github.allisson.bitcoinalert.domain.model.Candle
+import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
@@ -21,13 +26,27 @@ import org.junit.Test
 private const val TICKER =
     """{"stream":"btcusdt@ticker","data":{"e":"24hrTicker","c":"100000.12000000","P":"-3.829"}}"""
 
+private val TICKER_ONLY = setOf("btcusdt@ticker")
+private val HOME_5M = setOf("btcusdt@ticker", "btcusdt@kline_5m")
+private val HOME_15M = setOf("btcusdt@ticker", "btcusdt@kline_15m")
+private val HOME_1H = setOf("btcusdt@ticker", "btcusdt@kline_1h")
+
+private fun kline(interval: String) =
+    """{"stream":"btcusdt@kline_$interval","data":{"k":{"t":1700000000000,"i":"$interval",""" +
+        """"o":"1.00","h":"1.00","l":"1.00","c":"1.00","v":"1.0"}}}"""
+
+private fun request(method: String, stream: String, id: Int) = """{"method":"$method","params":["$stream"],"id":$id}"""
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class BinanceStreamClientTest {
 
     private class FakeConnection(val url: String, val listener: WebSocketConnector.Listener) :
         WebSocketConnector.Connection {
+        val sent = mutableListOf<String>()
         var closed = false
         var cancelled = false
+        override fun send(text: String) = sent.add(text)
+
         override fun close() {
             closed = true
         }
@@ -309,5 +328,142 @@ class BinanceStreamClientTest {
         assertEquals(Reconnecting, client.connectionState.value)
         assertNull(client.ticker.value)
         assertEquals(2, attempts.size)
+    }
+
+    private fun TestScope.collectKlines(client: BinanceStreamClient) = mutableListOf<KlineEvent>().also {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { client.klineEvents.toList(it) }
+    }
+
+    @Test
+    fun `stream set changes while Connecting send nothing and the next attempt uses the latest set`() = runTest {
+        val client = client(HOME_1H)
+
+        client.setDesiredStreams(HOME_15M)
+        runCurrent()
+        assertTrue(last.sent.isEmpty())
+        fail()
+        advance(1_000)
+
+        assertEquals("wss://stream.binance.com:443/stream?streams=btcusdt@kline_15m/btcusdt@ticker", last.url)
+    }
+
+    @Test
+    fun `after onOpen only the difference from the url's set is sent`() = runTest {
+        val client = client(HOME_1H)
+        client.setDesiredStreams(TICKER_ONLY)
+        runCurrent()
+
+        open()
+
+        assertEquals(listOf(request("UNSUBSCRIBE", "btcusdt@kline_1h", 1)), last.sent)
+    }
+
+    @Test
+    fun `first change after a quiet second goes out now, then at most one pair per second with the latest set`() =
+        runTest {
+            val client = client(TICKER_ONLY)
+            open()
+
+            client.setDesiredStreams(HOME_1H)
+            runCurrent()
+            assertEquals(listOf(request("SUBSCRIBE", "btcusdt@kline_1h", 1)), last.sent)
+
+            client.setDesiredStreams(HOME_15M)
+            client.setDesiredStreams(HOME_5M)
+            advance(999)
+            assertEquals(1, last.sent.size)
+            advance(1)
+
+            assertEquals(
+                listOf(
+                    request("SUBSCRIBE", "btcusdt@kline_1h", 1),
+                    request("UNSUBSCRIBE", "btcusdt@kline_1h", 2),
+                    request("SUBSCRIBE", "btcusdt@kline_5m", 3),
+                ),
+                last.sent,
+            )
+        }
+
+    @Test
+    fun `a window that ends with no difference sends nothing, and the next change goes out now`() = runTest {
+        val client = client(TICKER_ONLY)
+        open()
+        client.setDesiredStreams(HOME_1H)
+        client.setDesiredStreams(TICKER_ONLY)
+        client.setDesiredStreams(HOME_1H)
+        runCurrent()
+
+        advance(1_000)
+        assertEquals(1, last.sent.size)
+
+        client.setDesiredStreams(TICKER_ONLY)
+        runCurrent()
+        assertEquals(request("UNSUBSCRIBE", "btcusdt@kline_1h", 2), last.sent.last())
+    }
+
+    @Test
+    fun `an unchanged stream set sends nothing`() = runTest {
+        val client = client(HOME_1H)
+        open()
+
+        client.setDesiredStreams(HOME_1H)
+        advance(2_000)
+
+        assertTrue(last.sent.isEmpty())
+    }
+
+    @Test
+    fun `a kline in the url is in effect on onOpen, not while Connecting`() = runTest {
+        val client = client(HOME_1H)
+        val events = collectKlines(client)
+        assertTrue(events.isEmpty())
+
+        open()
+
+        assertEquals(listOf(KlineEvent.InEffect(Timeframe.H1)), events)
+    }
+
+    @Test
+    fun `a reconnection without a kline stream loads nothing`() = runTest {
+        val client = client(TICKER_ONLY)
+        val events = collectKlines(client)
+        open()
+        fail()
+        advance(1_000)
+        open()
+
+        assertTrue(events.isEmpty())
+    }
+
+    @Test
+    fun `a subscribed kline is in effect only once its SUBSCRIBE succeeds`() = runTest {
+        val client = client(TICKER_ONLY)
+        open()
+        val events = collectKlines(client)
+
+        client.setDesiredStreams(HOME_1H)
+        runCurrent()
+        assertTrue(events.isEmpty())
+
+        message("""{"result":null,"id":1}""")
+        assertEquals(listOf(KlineEvent.InEffect(Timeframe.H1)), events)
+    }
+
+    @Test
+    fun `klines of a stream no longer desired are discarded`() = runTest {
+        val client = client(HOME_1H)
+        open()
+        val events = collectKlines(client)
+
+        client.setDesiredStreams(HOME_15M)
+        runCurrent()
+        message(kline("1h"))
+        message(kline("15m"))
+
+        val candle = Candle(1700000000000, BigDecimal("1.00"), BigDecimal("1.00"), BigDecimal("1.00"), BigDecimal("1.00"), BigDecimal("1.0"))
+        assertEquals(
+            listOf(KlineEvent.Removed(Timeframe.H1), KlineEvent.Update(Timeframe.M15, candle)),
+            events,
+        )
     }
 }

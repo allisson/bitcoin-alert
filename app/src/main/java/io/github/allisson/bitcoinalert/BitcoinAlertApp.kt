@@ -7,6 +7,7 @@ import android.os.SystemClock
 import io.github.allisson.bitcoinalert.data.binance.BinanceRestClient
 import io.github.allisson.bitcoinalert.data.binance.BinanceStreamClient
 import io.github.allisson.bitcoinalert.data.binance.OkHttpWebSocketConnector
+import io.github.allisson.bitcoinalert.data.repository.CandleRepository
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,5 +31,9 @@ class BitcoinAlertApp : Application() {
                     },
                 )
             }
+    }
+
+    val candleRepository by lazy {
+        CandleRepository(binanceStreamClient.klineEvents, binanceRestClient::klines, appScope)
     }
 }
