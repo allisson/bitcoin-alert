@@ -196,17 +196,17 @@
 
 - [x] Define the `PriceAlert` domain model.
 - [x] Define the `AlertDirection` enum.
-- [ ] Implement ABOVE alert evaluation.
-- [ ] Implement BELOW alert evaluation.
-- [ ] Implement price crossing detection.
-- [ ] Use BigDecimal for all monetary comparisons.
-- [ ] Implement per-cycle baseline handling keyed by `(id, activationCycle)` on creation, enabling and reactivation; drop the baseline of every cycle that is no longer Active (`spec.md` §2.5).
-- [ ] Keep `previousPrice` across reconnections within a monitoring session; reset it on monitoring start or service restart.
+- [x] Implement ABOVE alert evaluation.
+- [x] Implement BELOW alert evaluation.
+- [x] Implement price crossing detection.
+- [x] Use BigDecimal for all monetary comparisons.
+- [x] Implement per-cycle baseline handling keyed by `(id, activationCycle)` on creation, enabling and reactivation; drop the baseline of every cycle that is no longer Active (`spec.md` §2.5).
+- [x] Keep `previousPrice` across reconnections within a monitoring session; reset it on monitoring start or service restart.
 - [x] Implement alert state transitions (trigger, disable, enable, reactivate; `spec.md` §2.5).
 - [x] Implement duplicate trigger prevention (the conditional `UPDATE` in the trigger transaction; the engine adds no second guard).
 - [x] Implement alert state persistence.
 - [x] Implement alert history creation.
-- [ ] Add comprehensive alert engine unit tests.
+- [x] Add comprehensive alert engine unit tests.
 
 ### Alert interface
 
