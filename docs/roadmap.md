@@ -83,27 +83,27 @@
 
 ### WebSocket client
 
-- [ ] Implement the Binance WebSocket client as a single process-scoped instance (combined streams).
+- [x] Implement the Binance WebSocket client as a single process-scoped instance (combined streams).
 - [ ] Subscribe to `btcusdt@ticker`.
 - [ ] Subscribe to `btcusdt@kline_<interval>` for the selected timeframe.
-- [ ] Declare `INTERNET` and `ACCESS_NETWORK_STATE` and block cleartext traffic with a Network Security Configuration (`cleartextTrafficPermitted="false"`; `spec.md` §5).
+- [x] Declare `INTERNET` and `ACCESS_NETWORK_STATE` and block cleartext traffic with a Network Security Configuration (`cleartextTrafficPermitted="false"`; `spec.md` §5).
 - [ ] Switch the kline subscription on timeframe change (`UNSUBSCRIBE` + `SUBSCRIBE`, same connection). Coalesce every stream set change (timeframe and Home visibility): the first change after a quiet second goes out immediately, then at most once per second, send only the difference to the latest desired set (5 messages per second limit, pings and pongs included); while `Connecting`/`Reconnecting`, send nothing and build the next URL from the latest set, then send the difference after `onOpen` (`spec.md` §3.3), with unit tests.
 - [ ] Discard kline messages from the previous interval after a timeframe change and cancel the previous REST candle load (`spec.md` §3.3), with unit tests.
 - [x] Implement ticker message parsing.
 - [x] Implement kline message parsing.
 - [ ] Give each `SUBSCRIBE`/`UNSUBSCRIBE` request an integer `id` from a counter in the client starting at 1 (`spec.md` §2.2).
-- [ ] Handle `SUBSCRIBE`/`UNSUBSCRIBE` responses (`{"result", "id"}` and errors `{"code", "msg"}` with an optional `"id"`, not wrapped; `spec.md` §2.2). A failure response is logged and treated as a lost connection, so the reconnection restores the subscriptions, with unit tests.
-- [ ] Implement connection state tracking.
-- [ ] Implement connection lifecycle management.
-- [ ] Implement exponential backoff (first attempt without delay after a connection up for 60 s or after leaving `Idle`; after the n-th consecutive failure, `min(1 s × 2ⁿ⁻¹, 60 s)`, plus 0–20% jitter that only adds (at most 72 s), from an injected random source; the counter resets only after 60 s up, so a connection dropping sooner counts as failed; `spec.md` §2.8), with unit tests.
-- [ ] Implement network interruption handling.
-- [ ] Reconnect after 10 seconds without messages while `Connected` (half-open connection watchdog; off while `Connecting`/`Reconnecting`), with unit tests.
-- [ ] Reset the backoff on `ConnectivityManager` network availability, only in `Connecting` or `Reconnecting` (`onAvailable` fires on registration); a failed attempt after it waits the backoff delay, with unit tests.
-- [ ] Implement the internal `Idle` state (empty stream set, connection closed on purpose; backoff, watchdog and network callback do nothing; entering it resets the backoff counter; `spec.md` §3.3), with unit tests.
+- [x] Handle `SUBSCRIBE`/`UNSUBSCRIBE` responses (`{"result", "id"}` and errors `{"code", "msg"}` with an optional `"id"`, not wrapped; `spec.md` §2.2). A failure response is logged and treated as a lost connection, so the reconnection restores the subscriptions, with unit tests.
+- [x] Implement connection state tracking.
+- [x] Implement connection lifecycle management.
+- [x] Implement exponential backoff (first attempt without delay after a connection up for 60 s or after leaving `Idle`; after the n-th consecutive failure, `min(1 s × 2ⁿ⁻¹, 60 s)`, plus 0–20% jitter that only adds (at most 72 s), from an injected random source; the counter resets only after 60 s up, so a connection dropping sooner counts as failed; `spec.md` §2.8), with unit tests.
+- [x] Implement network interruption handling.
+- [x] Reconnect after 10 seconds without messages while `Connected` (half-open connection watchdog; off while `Connecting`/`Reconnecting`), with unit tests.
+- [x] Reset the backoff on `ConnectivityManager` network availability, only in `Connecting` or `Reconnecting` (`onAvailable` fires on registration); a failed attempt after it waits the backoff delay, with unit tests.
+- [x] Implement the internal `Idle` state (empty stream set, connection closed on purpose; backoff, watchdog and network callback do nothing; entering it resets the backoff counter; `spec.md` §3.3), with unit tests.
 - [x] Normalize parsed prices (not volume or the 24-hour change) with `setScale(2, RoundingMode.UNNECESSARY)`, discard and log a message whose price is finer than the tick size instead of crashing, and compare prices only with `compareTo` (`spec.md` §2.5), with unit tests.
 - [ ] Derive the stream set from Home visibility and monitoring state (`spec.md` §3.3), with unit tests. Monitoring state exists only from Phase 4: here, test the derivation function and treat monitoring as stopped; Phase 4 wires the real state.
-- [ ] Implement connection recovery, restoring current subscriptions.
-- [ ] Handle the Binance 24-hour connection close as a routine reconnection.
+- [x] Implement connection recovery, restoring current subscriptions.
+- [x] Handle the Binance 24-hour connection close as a routine reconnection.
 - [ ] Avoid duplicate subscriptions.
 - [x] Add WebSocket parser tests.
 - [ ] Validate behavior with a real Binance connection.
