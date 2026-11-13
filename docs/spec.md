@@ -532,6 +532,8 @@ Responsibilities:
 
 The alert engine must be deterministic and independently testable.
 
+The engine keeps the last price seen by each Active `(id, activationCycle)`. A cycle seen for the first time takes the price as its baseline and is evaluated from the next price; every other cycle compares its stored price with the new one, then stores the new one. This is the `previousPrice` of §2.5 without a special case for baselines. A WebSocket reconnection keeps the stored prices; a monitoring start or service restart clears them. The engine returns the crossed alerts; the trigger transaction (§3.5) is the only duplicate-trigger guard, so a cycle replaced between the evaluation and the transaction changes nothing.
+
 ### 3.5 Persistence
 
 Use Room for alert configuration and history.
