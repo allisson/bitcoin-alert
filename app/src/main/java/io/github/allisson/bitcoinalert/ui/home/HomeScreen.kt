@@ -36,6 +36,7 @@ import io.github.allisson.bitcoinalert.R
 import io.github.allisson.bitcoinalert.data.repository.CandleState
 import io.github.allisson.bitcoinalert.domain.model.ConnectionState
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
+import io.github.allisson.bitcoinalert.ui.charts.CandleChart
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
 import java.util.Locale
 
@@ -134,7 +135,6 @@ private fun TimeframeSelector(selected: Timeframe?, onSelect: (Timeframe) -> Uni
     }
 }
 
-/** shortcut: text summary of the loaded candles; Phase 2b replaces it with the chart. */
 @Composable
 private fun CandlesArea(candles: CandleState, locale: Locale, onRetry: () -> Unit) {
     Box(
@@ -150,13 +150,10 @@ private fun CandlesArea(candles: CandleState, locale: Locale, onRetry: () -> Uni
                 Text(stringResource(R.string.candles_error))
                 Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
             }
-            is CandleState.Loaded -> Text(
-                stringResource(
-                    R.string.candles_summary,
-                    candles.candles.size,
-                    candles.candles.lastOrNull()?.let { formatPrice(it.close, locale) } ?: "",
-                ),
-            )
+            // Every load passes through Loading, so each load gets a new chart that opens at the last candle.
+            is CandleState.Loaded -> if (candles.candles.isNotEmpty()) {
+                CandleChart(candles.timeframe, candles.candles, locale)
+            }
         }
     }
 }
