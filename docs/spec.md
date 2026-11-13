@@ -628,6 +628,18 @@ Keep navigation simple and avoid unnecessary screens.
 
 Edge-to-edge is mandatory with `targetSdk` 35+ and cannot be opted out of from 36: call `enableEdgeToEdge()` and apply system bar insets on every screen.
 
+### Visual design
+
+The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`):
+
+- A fixed Material 3 palette, light and dark, with an orange accent; the rising and falling colors belong to the same palette. Text keeps a contrast of at least 4.5:1 against its background.
+- Numbers (prices, the 24-hour change, OHLC, axes, timeframes) use JetBrains Mono, bundled in the APK with its SIL Open Font License (`assets/licenses/`), so digits keep their width as the price updates. Downloadable fonts are not used: they need Google Play services and a network call. Other text uses the system font.
+- A bottom navigation bar with Market (Home), Alerts and History. Home stays at the bottom of the back stack, so Back from Alerts or History returns to it.
+- Home: the pair with the connection status as a pill (`Connected`, `Connecting`, `Reconnecting`) and a separate `Stale` pill; the price; the 24-hour change; timeframe tabs; the chart.
+- Alerts: each Active alert shows the distance from the current price to its target, as a percentage and a bar; the Alerts navigation item shows the number of Active alerts as a badge. Delete is an explicit action in the alert's menu, not a swipe.
+- History: entries grouped by day (device time zone), newest first.
+- The target price is typed with the system decimal keyboard.
+
 ### Accessibility
 
 - The 24-hour change shows its sign and an arrow, not only a red or green color.

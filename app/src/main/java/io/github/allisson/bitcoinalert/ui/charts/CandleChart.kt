@@ -15,7 +15,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.cartesian.AutoScrollCondition
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
@@ -24,6 +26,7 @@ import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.Axis
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModel
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
@@ -52,6 +55,7 @@ import io.github.allisson.bitcoinalert.domain.model.Candle
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.ui.home.formatPrice
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
+import io.github.allisson.bitcoinalert.ui.theme.MonoFamily
 import java.time.ZoneId
 import java.util.Locale
 
@@ -117,11 +121,16 @@ fun CandleChart(timeframe: Timeframe, candles: List<Candle>, locale: Locale, mod
                 formatVolume(shown.volume, locale),
             ),
             style = MaterialTheme.typography.bodySmall,
+            fontFamily = MonoFamily,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         ProvideVicoTheme(rememberM3VicoTheme()) {
             val priceColors = LocalPriceColors.current
             val zone = remember { ZoneId.systemDefault() }
             val guideline = rememberLineComponent(Fill(MaterialTheme.colorScheme.onSurfaceVariant), 1.dp)
+            val axisLabel = rememberAxisLabelComponent(
+                style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 10.sp, fontFamily = MonoFamily),
+            )
             val chart = rememberCartesianChart(
                 rememberCandlestickCartesianLayer(
                     candleProvider = CandlestickCartesianLayer.CandleProvider.absolute(
@@ -141,9 +150,11 @@ fun CandleChart(timeframe: Timeframe, candles: List<Candle>, locale: Locale, mod
                     verticalAxisPosition = Axis.Position.Vertical.End,
                 ),
                 startAxis = VerticalAxis.rememberStart(
+                    label = axisLabel,
                     valueFormatter = remember(locale) { CartesianValueFormatter { _, y, _ -> formatAxisPrice(y, locale) } },
                 ),
                 bottomAxis = HorizontalAxis.rememberBottom(
+                    label = axisLabel,
                     valueFormatter = remember(timeframe, locale) {
                         CartesianValueFormatter { _, x, _ -> formatAxisTime(x.toLong(), timeframe, zone, locale) }
                     },
