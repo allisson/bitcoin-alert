@@ -180,32 +180,32 @@
 
 ### Database
 
-- [ ] Configure Room: add KSP with `room-compiler` and the Room Gradle plugin (not added in Phase 0).
-- [ ] Create `PriceAlertEntity` (including `activationCycle`).
-- [ ] Create `AlertHistoryEntity`.
-- [ ] Implement alert DAO.
-- [ ] Implement history DAO.
-- [ ] Enable Room schema export (`exportSchema = true`, `room { schemaDirectory(...) }`) and commit the `schemas/` directory; migrations start after v1.0.0.
+- [x] Configure Room: add KSP with `room-compiler` and the Room Gradle plugin (not added in Phase 0).
+- [x] Create `PriceAlertEntity` (including `activationCycle`).
+- [x] Create `AlertHistoryEntity`.
+- [x] Implement alert DAO.
+- [x] Implement history DAO (its queries live in `AlertDao`: the trigger transaction writes both tables).
+- [x] Enable Room schema export (`exportSchema = true`, `room { schemaDirectory(...) }`) and commit the `schemas/` directory; migrations start after v1.0.0.
 - [ ] Bump `@Database(version)` on every schema change, including during `v0.*`: without the bump Room crashes on the identity hash check, fallback or not (`spec.md` §3.5).
-- [ ] Build the database with `fallbackToDestructiveMigration(dropAllTables = true)` while the version is `v0.*`, so a schema change between pre-releases drops test data instead of crashing (`spec.md` §3.5). Replaced in Phase 7.
-- [ ] Keep history entries when an alert is deleted (no FK cascade).
-- [ ] Implement transactional alert triggering (conditional `UPDATE` matching `activationCycle`, history insert only if one row changed; enabling and reactivation increment `activationCycle` in a single `UPDATE`; `spec.md` §3.5).
-- [ ] Add database tests.
+- [x] Build the database with `fallbackToDestructiveMigration(dropAllTables = true)` while the version is `v0.*`, so a schema change between pre-releases drops test data instead of crashing (`spec.md` §3.5). Replaced in Phase 7.
+- [x] Keep history entries when an alert is deleted (no FK cascade).
+- [x] Implement transactional alert triggering (conditional `UPDATE` matching `activationCycle`, history insert only if one row changed; enabling and reactivation increment `activationCycle` in a single `UPDATE`; `spec.md` §3.5).
+- [x] Add database tests.
 
 ### Alert domain
 
-- [ ] Define the `PriceAlert` domain model.
-- [ ] Define the `AlertDirection` enum.
+- [x] Define the `PriceAlert` domain model.
+- [x] Define the `AlertDirection` enum.
 - [ ] Implement ABOVE alert evaluation.
 - [ ] Implement BELOW alert evaluation.
 - [ ] Implement price crossing detection.
 - [ ] Use BigDecimal for all monetary comparisons.
 - [ ] Implement per-cycle baseline handling keyed by `(id, activationCycle)` on creation, enabling and reactivation; drop the baseline of every cycle that is no longer Active (`spec.md` §2.5).
 - [ ] Keep `previousPrice` across reconnections within a monitoring session; reset it on monitoring start or service restart.
-- [ ] Implement alert state transitions (trigger, disable, enable, reactivate; `spec.md` §2.5).
-- [ ] Implement duplicate trigger prevention.
-- [ ] Implement alert state persistence.
-- [ ] Implement alert history creation.
+- [x] Implement alert state transitions (trigger, disable, enable, reactivate; `spec.md` §2.5).
+- [x] Implement duplicate trigger prevention (the conditional `UPDATE` in the trigger transaction; the engine adds no second guard).
+- [x] Implement alert state persistence.
+- [x] Implement alert history creation.
 - [ ] Add comprehensive alert engine unit tests.
 
 ### Alert interface
@@ -231,7 +231,7 @@
 - [ ] Display trigger timestamp (device time zone and locale; `spec.md` §2.7).
 - [ ] Group entries by day in the device time zone (`spec.md` §4 Visual design).
 - [ ] Sort records by newest first (`ORDER BY triggeredAt DESC, id DESC`, auto-generated `Long` id; `spec.md` §2.7).
-- [ ] Validate history persistence across a database reopen (integration test).
+- [x] Validate history persistence across a database reopen (integration test).
 
 **Acceptance criteria:**
 

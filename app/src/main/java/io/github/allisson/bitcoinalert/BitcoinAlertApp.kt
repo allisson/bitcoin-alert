@@ -10,6 +10,8 @@ import io.github.allisson.bitcoinalert.data.binance.BinanceRestClient
 import io.github.allisson.bitcoinalert.data.binance.BinanceStreamClient
 import io.github.allisson.bitcoinalert.data.binance.OkHttpWebSocketConnector
 import io.github.allisson.bitcoinalert.data.binance.desiredStreamsFlow
+import io.github.allisson.bitcoinalert.data.database.AppDatabase
+import io.github.allisson.bitcoinalert.data.repository.AlertRepository
 import io.github.allisson.bitcoinalert.data.repository.CandleRepository
 import io.github.allisson.bitcoinalert.data.repository.SettingsRepository
 import kotlin.random.Random
@@ -50,6 +52,10 @@ class BitcoinAlertApp : Application() {
     val settingsRepository by lazy {
         SettingsRepository(PreferenceDataStoreFactory.create { preferencesDataStoreFile("settings") })
     }
+
+    val database by lazy { AppDatabase.build(this) }
+
+    val alertRepository by lazy { AlertRepository(database.alertDao(), System::currentTimeMillis) }
 
     override fun onCreate() {
         super.onCreate()

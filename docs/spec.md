@@ -587,7 +587,7 @@ Alert triggering runs in one Room transaction:
 
 The conditional update is the duplicate-trigger guard: a second evaluation of the same activation changes zero rows, and so does an evaluation based on a cycle that was replaced in the meantime (`activationCycle` no longer matches).
 
-Enabling and reactivating run as one statement, so the counter never depends on a value read earlier: `UPDATE price_alerts SET enabled = 1, triggeredAt = NULL, activationCycle = activationCycle + 1 WHERE id = :id`.
+Enabling and reactivating run as one statement, so the counter never depends on a value read earlier: `UPDATE price_alerts SET enabled = 1, triggeredAt = NULL, activationCycle = activationCycle + 1 WHERE id = :id AND (enabled = 0 OR triggeredAt IS NOT NULL)`. The last condition leaves an Active alert alone, so a repeated tap does not restart its baseline.
 
 ## 4. User Interface
 
