@@ -54,7 +54,7 @@
 - [x] Configure Android build environment with JDK 21 (Temurin, `actions/setup-java` with `distribution: temurin`, `java-version: 21`), matching `.tool-versions` (`spec.md` §3.1).
 - [x] Add a Debug build job.
 - [x] Add JVM test execution (`./gradlew testDebugUnitTest`: unit tests and Robolectric integration tests; `spec.md` §3.1).
-- [ ] Validate the initial build.
+- [x] Validate the initial build (CI green on PR #2).
 
 **Acceptance criteria:**
 
