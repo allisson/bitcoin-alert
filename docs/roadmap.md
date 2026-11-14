@@ -393,6 +393,18 @@ These include the Phase 4 device checks; record the results in `spec.md` and clo
 - [x] Verify no unnecessary personal data is collected. No accounts, analytics or backend; the only network traffic is the Binance public market data.
 - [x] Verify alert data is not included in Android backups or device-to-device transfer (`allowBackup="false"`, `dataExtractionRules`). Both set; the rules exclude every domain from cloud backup and device transfer. The on-device check is in `spec.md` §8 (Phase 7).
 
+### Chart alert lines
+
+Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §2.3).
+
+- [x] Draw the last price line with its tag, in the last candle's color.
+- [x] Draw the crosshair on the selected candle, with the close and time tags.
+- [x] Color each volume bar by its candle's direction.
+- [x] Show the selected candle's own change next to its time, above the OHLC line.
+- [x] Draw each Active alert as a line labeled with its target and distance from the price; pin alerts outside the candles' range to the edge.
+- [ ] Create an alert by long-pressing the chart: the New alert sheet opens with the touched price and the matching direction.
+- [ ] Check the overlays on the device, in light and dark themes.
+
 **Acceptance criteria:**
 
 - Critical business rules are covered by automated tests.

@@ -140,7 +140,14 @@ The chart must support:
 - Selected candle OHLC information.
 - Real-time updates from the kline stream: a message with the same `openTime` as the last candle replaces it, a newer one is appended (a new period started), an older one is discarded. The same rule merges the buffered updates after a REST load (§3.3). Appended candles grow the series beyond 200; the next reload trims it back.
 
-Chart layout (Vico): one chart with two layers sharing the time axis, so scroll and zoom need no synchronization (two Vico charts cannot share one scroll state). Candles use the start axis with the intrinsic range of the loaded candles; volume bars use the end axis, which is not drawn, with the range `0` to 4 × the highest volume, so the bars fill the bottom quarter. The _x_ value is the candle `openTime` in epoch milliseconds; time labels use the device time zone and locale (`HH:mm`, the short date for `1d`). The chart opens at the last candle showing about 60 candles; zoom goes from all loaded candles to about 15. A new candle scrolls the chart only when it showed the last candle before the update. Tapping a candle selects it (tapping it again clears the selection); the line above the chart shows the selected candle's time, OHLC and volume, or the last candle when none is selected.
+Chart layout (Vico): one chart with two layers sharing the time axis, so scroll and zoom need no synchronization (two Vico charts cannot share one scroll state). Candles use the start axis with the intrinsic range of the loaded candles; volume bars use the end axis, which is not drawn, with the range `0` to 4 × the highest volume, so the bars fill the bottom quarter. The _x_ value is the candle `openTime` in epoch milliseconds; time labels use the device time zone and locale (`HH:mm`, the short date for `1d`). The chart opens at the last candle showing about 60 candles; zoom goes from all loaded candles to about 15. A new candle scrolls the chart only when it showed the last candle before the update. Tapping a candle selects it (tapping it again clears the selection); the lines above the chart show the selected candle's time and its own change from open to close (signed, 2 decimal places, in the rising or falling color), then its OHLC and volume, or the last candle when none is selected.
+
+Chart overlays (`docs/prototypes/chart-options.html`, option 2):
+
+- **Last price line:** a dashed line at the last candle's close, with a tag at the end of the chart, in the last candle's rising or falling color.
+- **Crosshair:** the selected candle shows a vertical line and a horizontal line at its close, with the close tagged at the end of the chart and the time tagged over the time axis.
+- **Volume:** each bar takes its candle's rising or falling color, lighter.
+- **Alert lines:** each Active alert is a dashed line at its target, in the rising color for `ABOVE` and the falling color for `BELOW`, labeled at the start of the chart with an arrow, the target without decimals and its signed distance from the current ticker price (`▲ 102,000  +4.71%`, no distance before the first price). Disabled and Triggered alerts are not drawn. The price axis keeps the candles' intrinsic range: an alert outside it is pinned to the top or bottom edge with `↑` or `↓`, without a line, so a distant target does not flatten the candles.
 
 ### 2.4 Chart Timeframes
 
@@ -639,7 +646,7 @@ Edge-to-edge is mandatory with `targetSdk` 35+ and cannot be opted out of from 3
 
 ### Visual design
 
-The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`):
+The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`); the chart overlays follow option 2 of `docs/prototypes/chart-options.html` (§2.3):
 
 - A fixed Material 3 palette, light and dark, with an orange accent; the rising and falling colors belong to the same palette. Text keeps a contrast of at least 4.5:1 against its background.
 - Numbers (prices, the 24-hour change, OHLC, axes, timeframes) use JetBrains Mono, bundled in the APK with its SIL Open Font License (`assets/licenses/`), so digits keep their width as the price updates. Downloadable fonts are not used: they need Google Play services and a network call. Other text uses the system font.
