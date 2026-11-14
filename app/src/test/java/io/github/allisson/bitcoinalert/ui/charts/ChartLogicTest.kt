@@ -68,4 +68,29 @@ class ChartLogicTest {
         assertEquals(BigDecimal("1.00"), candleChange(candle("100.00", "101.00")))
         assertEquals(BigDecimal("-0.11"), candleChange(candle("95689.30", "95585.86")))
     }
+
+    @Test
+    fun `the visible open times change only when a candle enters or leaves`() {
+        // 10 px per candle, 5 px start padding, 1-minute candles from 0: candle i fills 10i..10i + 10 - scroll.
+        fun at(scroll: Float) = visibleX(scroll, 100f, 5f, 10f, 0.0, 60_000.0)
+        assertEquals(0.0..540_000.0, at(0f))
+        assertEquals(0.0..600_000.0, at(1f))
+        assertEquals(0.0..600_000.0, at(9f))
+        assertEquals(60_000.0..600_000.0, at(10f))
+        assertEquals(1_000_000.0..1_540_000.0, visibleX(0f, 100f, 5f, 10f, 1_000_000.0, 60_000.0))
+    }
+
+    @Test
+    fun `the fit covers the low, high and volume of the visible candles only`() {
+        fun candle(openTime: Long, low: String, high: String, volume: String) =
+            Candle(openTime, BigDecimal(low), BigDecimal(high), BigDecimal(low), BigDecimal(high), BigDecimal(volume))
+        val candles = listOf(
+            candle(0, "60000.00", "61000.00", "900"),
+            candle(60_000, "67500.00", "67800.00", "10"),
+            candle(120_000, "67600.00", "67900.00", "20"),
+        )
+        assertEquals(VisibleFit(67_500.0, 67_900.0, 20.0), visibleFit(candles, 60_000.0..180_000.0))
+        assertEquals(VisibleFit(60_000.0, 67_900.0, 900.0), visibleFit(candles, null))
+        assertNull(visibleFit(candles, 300_000.0..400_000.0))
+    }
 }

@@ -8,8 +8,10 @@ import java.io.Serializable
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
+import kotlin.math.ceil
+import kotlin.math.floor
 
-/** An alert line outside the candles' price range is pinned to that edge (spec.md §2.3). */
+/** An alert line or the last price outside the visible candles' price range is pinned to that edge (spec.md §2.3). */
 enum class Pin { Top, Bottom }
 
 /** `null` when [target] is inside `[minY, maxY]`, so its line is drawn at the target. */
@@ -17,6 +19,27 @@ fun pinOf(target: Double, minY: Double, maxY: Double): Pin? = when {
     target > maxY -> Pin.Top
     target < minY -> Pin.Bottom
     else -> null
+}
+
+/**
+ * The open times shown in a chart [width] wide, as a range that changes only when a candle enters
+ * or leaves: candle `i` (x = [minX] + i × [xStep]) is centered [startPadding] + i × [xSpacing] −
+ * [scroll] from the left edge, and counts while any of its slot is on screen.
+ */
+fun visibleX(scroll: Float, width: Float, startPadding: Float, xSpacing: Float, minX: Double, xStep: Double): ClosedFloatingPointRange<Double> {
+    val first = floor((scroll - startPadding - xSpacing / 2) / xSpacing) + 1
+    val last = ceil((scroll + width - startPadding + xSpacing / 2) / xSpacing) - 1
+    return (minX + first * xStep)..(minX + last * xStep)
+}
+
+/** The price axis and the highest volume bar for the candles shown (spec.md §2.3). */
+data class VisibleFit(val minY: Double, val maxY: Double, val maxVolume: Double)
+
+/** Fit of the candles with an open time in [x], or of every candle before the first draw (`null`). */
+fun visibleFit(candles: List<Candle>, x: ClosedFloatingPointRange<Double>?): VisibleFit? {
+    val shown = if (x == null) candles else candles.filter { it.openTime.toDouble() in x }
+    if (shown.isEmpty()) return null
+    return VisibleFit(shown.minOf { it.low }.toDouble(), shown.maxOf { it.high }.toDouble(), shown.maxOf { it.volume }.toDouble())
 }
 
 /**

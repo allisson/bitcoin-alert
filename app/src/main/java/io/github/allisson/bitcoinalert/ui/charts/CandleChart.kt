@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -88,6 +89,9 @@ private val LABEL_GAP = 2.dp
 /** The `openTime` of every rising candle, so the volume bar takes its candle's color. */
 private val RisingKey = ExtraStore.Key<Set<Double>>()
 
+/** The price axis and volume scale of the visible candles (spec.md §2.3). */
+private val FitKey = ExtraStore.Key<VisibleFit>()
+
 /**
  * Candles on the start axis and volume bars on the end axis of one chart, so they share scroll
  * and zoom (spec.md §2.3), with the last price line and a line per Active alert. Tapping a candle
@@ -117,14 +121,21 @@ fun CandleChart(
         minZoom = Zoom.Content,
         maxZoom = remember { Zoom.max(visibleCandles(15), Zoom.Content) },
     )
+    // Written while drawing; Vico computes the axes only in a transaction, so a new window sends one.
+    val visible = remember { mutableStateOf<ClosedFloatingPointRange<Double>?>(null) }
     LaunchedEffect(candles) {
-        // Read before the transaction: Vico updates the scroll range before asking the condition.
-        stickToEnd.atEnd = scrollState.value >= scrollState.maxValue - 1f
-        val x = candles.map { it.openTime }
-        producer.runTransaction {
-            candlestickModel(x, candles.map { it.open }, candles.map { it.close }, candles.map { it.low }, candles.map { it.high })
-            columnModel { series(x, candles.map { it.volume }) }
-            extras { it[RisingKey] = candles.filter { c -> c.close >= c.open }.map { c -> c.openTime.toDouble() }.toSet() }
+        snapshotFlow { visible.value }.collect { window ->
+            // Read before the transaction: Vico updates the scroll range before asking the condition.
+            stickToEnd.atEnd = scrollState.value >= scrollState.maxValue - 1f
+            val x = candles.map { it.openTime }
+            producer.runTransaction {
+                candlestickModel(x, candles.map { it.open }, candles.map { it.close }, candles.map { it.low }, candles.map { it.high })
+                columnModel { series(x, candles.map { it.volume }) }
+                extras {
+                    it[RisingKey] = candles.filter { c -> c.close >= c.open }.map { c -> c.openTime.toDouble() }.toSet()
+                    visibleFit(candles, window)?.let { fit -> it[FitKey] = fit }
+                }
+            }
         }
     }
 
@@ -200,6 +211,7 @@ fun CandleChart(
                     upTag = upTag,
                     downTag = downTag,
                     locale = locale,
+                    onVisibleX = { visible.value = it },
                 )
             }
             SideEffect {
@@ -239,7 +251,7 @@ fun CandleChart(
                         neutral = candle(muted),
                         bearish = candle(priceColors.down),
                     ),
-                    rangeProvider = CartesianLayerRangeProvider.Intrinsic,
+                    rangeProvider = PriceRange,
                     verticalAxisPosition = Axis.Position.Vertical.Start,
                 ),
                 rememberColumnCartesianLayer(
@@ -293,11 +305,18 @@ private fun tag(color: Color, text: Color) = rememberTextComponent(
 /** Zoom that shows [count] candles across the chart width. */
 private fun visibleCandles(count: Int) = Zoom { _, layerDimensions, bounds -> bounds.width / (count * layerDimensions.xSpacing) }
 
-/** Volume bars use the bottom quarter of the chart: 0 at the bottom, the highest bar at a quarter. */
+/** The visible candles' low to high; every loaded candle before the first draw. */
+private object PriceRange : CartesianLayerRangeProvider {
+    override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = extraStore.getOrNull(FitKey)?.minY ?: minY
+
+    override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore) = extraStore.getOrNull(FitKey)?.maxY ?: maxY
+}
+
+/** Volume bars use the bottom quarter of the chart: 0 at the bottom, the highest visible bar at a quarter. */
 private object VolumeRange : CartesianLayerRangeProvider {
     override fun getMinY(minY: Double, maxY: Double, extraStore: ExtraStore) = 0.0
 
-    override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore) = maxY * 4
+    override fun getMaxY(minY: Double, maxY: Double, extraStore: ExtraStore) = (extraStore.getOrNull(FitKey)?.maxVolume ?: maxY) * 4
 }
 
 /** Each volume bar in its candle's rising or falling color. */
@@ -324,9 +343,9 @@ private fun CartesianDrawingContext.priceY(value: Double): Float {
 
 /**
  * The last price as a dashed line with a tag at the end, in the last candle's color, and each
- * Active alert as a dashed line with its label at the start; an alert outside the candles' range
- * is pinned to that edge, without a line (spec.md §2.3). The state fields are read while drawing,
- * so a change redraws the chart.
+ * Active alert as a dashed line with its label at the start; a price outside the visible candles'
+ * range is pinned to that edge, without a line (spec.md §2.3). The state fields are read while
+ * drawing, so a change redraws the chart. Each draw reports the visible open times to [onVisibleX].
  */
 private class PriceLines(
     private val upLine: LineComponent,
@@ -336,6 +355,7 @@ private class PriceLines(
     private val upTag: TextComponent,
     private val downTag: TextComponent,
     private val locale: Locale,
+    private val onVisibleX: (ClosedFloatingPointRange<Double>) -> Unit,
 ) : Decoration {
     var last by mutableStateOf<Candle?>(null)
     var alerts by mutableStateOf<List<PriceAlert>>(emptyList())
@@ -357,6 +377,9 @@ private class PriceLines(
         bottom = bounds.bottom
         minY = range.minY
         maxY = range.maxY
+        // Left to right only: the manifest does not set supportsRtl.
+        val dimensions = context.layerDimensions
+        onVisibleX(visibleX(context.scroll, bounds.width, dimensions.startPadding, dimensions.xSpacing, context.ranges.minX, context.ranges.xStep))
         // Highest target first, so labels at the same edge stack in price order.
         val shown = alerts.sortedByDescending { it.targetPrice }.map { alert ->
             val pin = pinOf(alert.targetPrice.toDouble(), range.minY, range.maxY)
@@ -381,10 +404,19 @@ private class PriceLines(
         }
         val candle = last ?: return
         val rising = candle.close >= candle.open
-        val y = context.priceY(candle.close.toDouble())
-        (if (rising) lastUpLine else lastDownLine).drawHorizontal(context, bounds.left, bounds.right, y)
         val tag = if (rising) upTag else downTag
-        val label = formatAxisPrice(candle.close.toDouble(), locale)
+        val close = candle.close.toDouble()
+        val pin = pinOf(close, range.minY, range.maxY)
+        val label = formatAxisPrice(close, locale) + when (pin) {
+            Pin.Top -> " ↑"
+            Pin.Bottom -> " ↓"
+            null -> ""
+        }
+        val y = when (pin) {
+            Pin.Top -> bounds.top + tag.getHeight(context, label) / 2
+            Pin.Bottom -> bounds.bottom - tag.getHeight(context, label) / 2
+            null -> context.priceY(close).also { (if (rising) lastUpLine else lastDownLine).drawHorizontal(context, bounds.left, bounds.right, it) }
+        }
         tag.draw(context, label, bounds.right - tag.getWidth(context, label) / 2, y, Position.Horizontal.Center, Position.Vertical.Center)
     }
 }
