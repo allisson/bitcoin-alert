@@ -21,5 +21,8 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v6
 
+      - name: Test the version derivation
+        run: ./gradlew -p buildSrc test
+
       - name: Build debug APK and run JVM tests
         run: ./gradlew assembleDebug testDebugUnitTest

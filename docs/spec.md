@@ -702,7 +702,7 @@ The application will be distributed exclusively through GitHub Releases.
 ### Release requirements
 
 - Generate a signed Release APK.
-- Keep signing credentials in GitHub Actions Secrets.
+- Keep signing credentials in GitHub Actions Secrets. Gradle reads them from the `KEYSTORE_FILE`, `KEYSTORE_PASSWORD` and `KEY_ALIAS` environment variables; without them the Release APK is unsigned (local builds), and the release workflow fails on an unsigned APK (`apksigner verify`).
 - Use the same signing key for subsequent releases.
 - Generate a SHA-256 checksum. It only detects a corrupted download: it is published next to the APK, so it does not prove the APK was not tampered with. The file uses the `sha256sum` format (`<hash>  <file name>`), generated with `sha256sum bitcoin-alert-vX.Y.Z.apk > bitcoin-alert-vX.Y.Z.apk.sha256`, so users check it with `sha256sum -c` (Linux) or `shasum -a 256 -c` (macOS) in the download folder.
 - Publish the SHA-256 fingerprint of the signing certificate in the README, so users can check an APK with `apksigner verify --print-certs`.
@@ -711,7 +711,7 @@ The application will be distributed exclusively through GitHub Releases.
 - Derive `versionCode` from the tag (`vMAJOR.MINOR.PATCH` → `MAJOR * 10000 + MINOR * 100 + PATCH`, e.g. `v1.2.3` → `10203`) and `versionName` from the tag without the `v`. Android rejects an update whose `versionCode` is lower than the installed one (`INSTALL_FAILED_VERSION_DOWNGRADE`).
 - The workflow accepts only tags matching `^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]?)\.(0|[1-9][0-9]?)$` (no leading zeros, MINOR and PATCH from 0 to 99, so the formula never collides) and fails on any other tag and on `v0.0.0`, whose `versionCode` would be 0 (Android requires a positive value). Pre-release tags are not supported in the MVP.
 - Builds without a version tag (local builds, pull request CI) use `versionCode = 1` and `versionName = "0.0.0-dev"`. They are never published.
-- The tag validation and `versionCode` derivation live in one function in the Gradle build logic, so they can be unit tested (§7) and the release workflow only passes the tag to Gradle.
+- The tag validation and `versionCode` derivation live in one function in the Gradle build logic (`versionFromTag` in `buildSrc`), so they can be unit tested (§7) and the release workflow only passes the tag to Gradle (`-PreleaseTag`).
 - Release builds do not enable R8 minification or resource shrinking in the MVP: the APK size gain does not justify keep-rule debugging for kotlinx.serialization and Room.
 - Publish `v0.*` tags as GitHub pre-releases (`--prerelease`), so test builds never become the "Latest" release users are pointed to.
 
@@ -745,7 +745,7 @@ What is known (sources checked on 2026-11-14):
 - The free limited distribution account is meant for hobbyists and personal use, with no government ID required. It registers apps, but only devices authorized in the console (up to 50 at a time, through a QR code or link handshake; Google's pages also say 20) install them normally; any other device needs the advanced flow or `adb`. A removed device stops installing and updating the account's apps.
 - The full distribution account costs a one-time US$ 25 and allows unlimited apps and installs. An individual provides a government-issued photo ID, a proof of address, and an email and phone number verified by a one-time code.
 
-**Decision: full distribution account.** The APK is public on GitHub Releases, so anyone who downloads it must be able to install it without being on a device list. The same account also registers the developer's other personal apps. The limited account was rejected because only authorized devices would install the app normally. Registration is done in Phase 6, before the first release tag, so installs keep working when the global rollout reaches sideloaded apps. Development builds installed through Android Studio or `adb` are exempt.
+**Decision: full distribution account.** The APK is public on GitHub Releases, so anyone who downloads it must be able to install it without being on a device list. The same account also registers the developer's other personal apps. The limited account was rejected because only authorized devices would install the app normally. Registration is done in Phase 6, before the `v1.0.0` tag, so installs keep working when the global rollout reaches sideloaded apps; `v0.*` pre-releases may ship before it, because sideloaded installs are not covered until the 2027 rollout. Development builds installed through Android Studio or `adb` are exempt.
 
 Decisions and status:
 
