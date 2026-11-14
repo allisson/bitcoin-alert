@@ -254,6 +254,8 @@ The ticker stream delivers snapshots every 1000 ms; spikes that reverse between 
 
 All price comparisons must use decimal arithmetic (`BigDecimal`), never floating-point comparisons.
 
+A failed database or DataStore write started by a user action (creating, enabling, disabling, reactivating or deleting an alert; starting or stopping monitoring; selecting a timeframe), e.g. on a full disk, is logged and does not crash the application. The screens read the stored state, so they keep showing what was actually saved.
+
 Binance sends prices with 8 decimal places (e.g. `"100000.01000000"`). Every parsed price (ticker `c`; kline `o`, `h`, `l`, `c`; the alert target, after validation) is normalized with `setScale(2, RoundingMode.UNNECESSARY)` (lossless: the tick size is 0.01) before it is compared, stored or displayed. If normalization throws `ArithmeticException` (a price finer than the tick size, e.g. after a Binance tick size change), the message is discarded and logged; it must never crash the service. The rule applies only to prices: kline volume (`v`) and the 24-hour percentage change (`P`) are not normalized to scale 2. Compare prices only with `compareTo`: `BigDecimal.equals` (and Kotlin `==`) also compares the scale, so `100000.50` and `100000.5` are not equal.
 
 ### 2.6 Notifications
