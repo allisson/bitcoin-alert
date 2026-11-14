@@ -486,7 +486,9 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 
 ### Final checklist
 
-- [ ] Every MVP acceptance criterion in `spec.md` §8 is checked (that list is the single source; do not copy it here).
+- [ ] Every MVP acceptance criterion in `spec.md` §8 is checked (that list is the single source; do not copy it here). The `v0.1.2` walkthrough checked all but two (`spec.md` §7, MVP walkthrough): screen-off monitoring waits for the screen-off tests, and accessibility for the task below.
+- [x] Check on the device that alert data is excluded from cloud backup and device-to-device transfer: `bmgr` with the local transport refused the cloud backup, sent an empty device transfer, and restored nothing after `pm clear` (`spec.md` §7, MVP walkthrough).
+- [ ] Keep an Active alert's target on one line at font scale 2.0 (Disabled rows share the layout): it wraps (`65.171,` / `00`) next to the switch on the Galaxy A54 (`spec.md` §4 Accessibility).
 - [ ] Battery consumption is documented.
 - [ ] Application documentation is complete.
 

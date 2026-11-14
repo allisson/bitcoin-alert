@@ -849,41 +849,66 @@ Samsung Galaxy A54 (SM-A546E), Android 16 (API 36), One UI 8.5, debug APK, Novem
 | Chart scrolling, refit variants measured back to back (same setup) | A Perfetto trace showed 788 refits in 20 swipes, almost one per frame, each making Vico lay out the axis labels again (`TextComponent.getTextLayoutResult`, 17.5% of the main thread's CPU samples). Refit on every window, as shipped: 6.57% to 9.13% janky, 17 ms at the 50th percentile, 27 ms at the 90th. Refit only when the fit changes: 384 refits in the trace, 7.40% to 8.90% janky, 16 to 17 ms at the 50th. Fit changes at most every 150 ms (adopted): 4.51% to 5.25% janky, 14 ms at the 50th, 23 ms at the 90th. Results drift between sessions, so only back-to-back rounds are compared. |
 | Release APK update, `v0.1.0` → `v0.1.1` (`adb install -r`) | Installed as an update: `versionCode` 100 → 101, `firstInstallTime` kept. Both APKs carry the same signing certificate. |
 
+#### MVP walkthrough (`v0.1.2`)
+
+Release APK `v0.1.2` from GitHub Releases on the Galaxy A54, November 14, 2026, one pass over §8. The screen was read with `uiautomator dump`, and the system side with `dumpsys`. The app started without the battery optimization exemption and with the notification permission denied.
+
+| §8 criterion | Evidence |
+|---|---|
+| Installs through a signed APK | `shasum -a 256 -c` OK; `apksigner` prints the published fingerprint; installed over `v0.1.1` as an update (`versionCode` 101 → 102, `firstInstallTime` kept). |
+| Real-time price, 24h change, connection status | Three reads 2 s apart: 65.392,62 → 65.407,60 → 65.409,11, with `▼ -4,74%` next to `24h` and the Connected pill. |
+| Stale data, WebSocket reconnection | Wi-Fi and mobile data off: Reconnecting at once, Stale 14 s later (first read). Network back: Connected within 6 s, and the price moving again. |
+| Historical candles, four timeframes, chart updates | 5m, 15m, 1h and 1d each show their current candle (1d opens 13/11, 21:00 local); the last candle's close and volume change between reads. |
+| Timeframe restored | 15m selected, app force-stopped and reopened: 15m shown. |
+| ABOVE and BELOW alerts; disable, enable, reactivate, delete | Created Above 80.000 and Below 50.000 from the New alert sheet; the 80.000 switch moved it to Disabled and back; Reactivate moved a Triggered alert to Active; Delete asked "Delete alert?" and removed it. |
+| Start and stop monitoring | Start: "Monitoring running" and the "Monitoring BTC/USDT" notification (channel `monitoring`, importance 2). |
+| Crossing detection, no duplicate notifications | Above 65.201 created at 65.186 triggered at 65.201,76 (14:02); after Reactivate, it triggered again at 65.208,15 and Below 65.171 at 65.168,48 (14:06). One notification per trigger. |
+| Sound and vibration | At the 14:02 trigger: a `USAGE_NOTIFICATION` sound started (`dumpsys audio`) and the system vibrated for 1110 ms (`dumpsys vibrator_manager`, reason `Notification (<package>)`); channel `price_alerts`, importance 4. |
+| Notification opens History | Tapping "BTC above 65.201,00" opened History with that entry. |
+| History newest first | Three entries: Above 65.201 (14:06), Below 65.171 (14:06), Above 65.201 (14:02). |
+| Alerts survive restarts; interruption communicated | Force-stop while monitoring: reopened on "Monitoring interrupted" with the 3 Active alerts and the History kept. After a reboot: see Device reboot above. |
+| Home warnings | With 2 Active alerts: "Monitoring is off" (gone once monitoring ran) and "Notifications are off" (gone after enabling notifications on the screen its Settings opened). |
+| Battery optimization action | Allow opened the system dialog "Parar a otimização do uso da bateria?"; after OK the app is on the `deviceidle` whitelist and the warning is gone. |
+| Backup and device-to-device transfer | Local backup transport (`bmgr`). Cloud backup: "Backup is not allowed". Device transfer (`is_device_transfer=true`): the transport rejected the package as empty, while a control app (Google Calculator) sent 67,584 bytes. After `pm clear` and `bmgr restore`, Alerts and History stayed empty. The Google transport was restored afterwards. |
+| Edge-to-edge | Home, Alerts and History draw behind the status and navigation bars with the content inside the insets. |
+| Accessibility (§4) | `▼` and the sign with the 24h change; icon buttons labeled (`Enabled` switch, `More options`); at font scale 2.0 every screen stays usable, but an Active alert's target wraps (`65.171,` / `00`). |
+| GitHub Actions publishes a signed APK | `v0.1.2` release workflow: tests, signed APK, checksum and pre-release. |
+
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
 
 ## 8. MVP Acceptance Criteria
 
-The MVP is complete when:
+The MVP is complete when (evidence: §7, MVP walkthrough):
 
-- [ ] The application installs through a signed APK.
-- [ ] The current BTC/USDT price updates in real time.
-- [ ] The 24-hour percentage change is displayed.
-- [ ] Binance connection status is visible.
-- [ ] Stale data is indicated after 10 seconds without ticker messages.
-- [ ] Historical candles load successfully.
-- [ ] All four timeframes work.
-- [ ] Candlestick charts update correctly.
-- [ ] Users can create ABOVE alerts.
-- [ ] Users can create BELOW alerts.
-- [ ] Users can disable, enable, reactivate and delete alerts.
-- [ ] Users can start and stop monitoring.
-- [ ] Alert crossing detection works correctly.
-- [ ] Duplicate notifications are prevented.
-- [ ] Alerts survive application restarts.
-- [ ] Triggered alerts appear in history, newest first.
-- [ ] Sound and vibration work when permitted.
+- [x] The application installs through a signed APK.
+- [x] The current BTC/USDT price updates in real time.
+- [x] The 24-hour percentage change is displayed.
+- [x] Binance connection status is visible.
+- [x] Stale data is indicated after 10 seconds without ticker messages.
+- [x] Historical candles load successfully.
+- [x] All four timeframes work.
+- [x] Candlestick charts update correctly.
+- [x] Users can create ABOVE alerts.
+- [x] Users can create BELOW alerts.
+- [x] Users can disable, enable, reactivate and delete alerts.
+- [x] Users can start and stop monitoring.
+- [x] Alert crossing detection works correctly.
+- [x] Duplicate notifications are prevented.
+- [x] Alerts survive application restarts.
+- [x] Triggered alerts appear in history, newest first.
+- [x] Sound and vibration work when permitted.
 - [ ] Foreground monitoring works with the screen off under supported Android conditions.
-- [ ] WebSocket reconnection works.
-- [ ] Monitoring interruption is communicated to the user (Interrupted state, including after a reboot).
-- [ ] The main screen warns when Active alerts exist and monitoring is not running.
-- [ ] The main screen warns when Active alerts exist and notifications are disabled, and the warning disappears after the cause is fixed in system settings.
-- [ ] The battery optimization action opens the system dialog and disappears once the application is exempt.
-- [ ] The selected timeframe is restored on the next launch.
-- [ ] Tapping an alert notification opens the History screen.
-- [ ] Alert data is excluded from cloud backup and device-to-device transfer.
-- [ ] Every screen is edge-to-edge with system bar insets applied.
+- [x] WebSocket reconnection works.
+- [x] Monitoring interruption is communicated to the user (Interrupted state, including after a reboot).
+- [x] The main screen warns when Active alerts exist and monitoring is not running.
+- [x] The main screen warns when Active alerts exist and notifications are disabled, and the warning disappears after the cause is fixed in system settings.
+- [x] The battery optimization action opens the system dialog and disappears once the application is exempt.
+- [x] The selected timeframe is restored on the next launch.
+- [x] Tapping an alert notification opens the History screen.
+- [x] Alert data is excluded from cloud backup and device-to-device transfer.
+- [x] Every screen is edge-to-edge with system bar insets applied.
 - [ ] The accessibility requirements in §4 are met.
-- [ ] GitHub Actions builds and publishes a signed APK.
+- [x] GitHub Actions builds and publishes a signed APK.
 
 ## 9. Future Considerations
 
