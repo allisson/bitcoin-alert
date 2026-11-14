@@ -323,8 +323,8 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 - [ ] Measure battery consumption with monitoring enabled.
 - [ ] Test with the screen turned off; if ticker updates are missed, add a `PARTIAL_WAKE_LOCK` while monitoring (declaring `WAKE_LOCK`) and measure its cost (`spec.md` §2.8, §5).
 - [ ] Test extended monitoring sessions.
-- [ ] Review network activity.
-- [ ] Optimize unnecessary processing and database writes.
+- [x] Review network activity: in the background the single connection carries only `btcusdt@ticker` (about one message per second, answered pings aside); other traffic comes only from reconnections (watchdog and backoff). The radio cost is inherent to real-time monitoring. `@miniTicker` was considered and kept out: same frequency, no `P` field; revisit only if the Phase 5 overnight measurement shows a high cost.
+- [x] Optimize unnecessary processing and database writes: nothing to optimize. Each message costs one JSON parse, a `Ticker` and an `AlertEngine` pass over the in-memory alert list; the database is written only by a trigger transaction, DataStore only on start and stop, and the monitoring notification only when the Active count changes. The Phase 5 measurement can reopen it.
 - [ ] Document measured results.
 
 **Acceptance criteria:**
