@@ -7,6 +7,13 @@ backend, no accounts, no analytics. Distributed as a signed APK through GitHub R
 Status: in development; `v0.*` releases are test builds. See [`docs/spec.md`](docs/spec.md) for the
 requirements and [`docs/roadmap.md`](docs/roadmap.md) for the implementation phases.
 
+<p>
+  <img src="docs/screenshots/home.png" width="200" alt="Home: live price, monitoring running, 1h candlestick chart with two alert lines">
+  <img src="docs/screenshots/sheet.png" width="200" alt="New alert sheet opened by a long press on the chart">
+  <img src="docs/screenshots/alerts.png" width="200" alt="Alerts: two active alerts and one triggered">
+  <img src="docs/screenshots/history.png" width="200" alt="History: a triggered alert with the observed price">
+</p>
+
 ## Install
 
 Requires Android 8.0 (API 26) or newer.
