@@ -256,16 +256,16 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 
 ### Platform investigation
 
-- [ ] Review current Android Foreground Service requirements.
+- [x] Review current Android Foreground Service requirements: recorded in `spec.md` §2.8 (`specialUse` from API 34, `ServiceCompat.startForeground` below API 29, the `startForeground` deadline, `dataSync` limited to 6 hours per day on Android 15).
 - [x] Declare the `specialUse` Foreground Service type with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; start it with `ServiceCompat.startForeground`.
-- [ ] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below). `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is declared (4c); `VIBRATE` is not declared and waits for the device check below.
+- [x] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below). `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is declared (4c); `VIBRATE` is not declared and waits for the device check below.
 - [ ] Check whether alert vibration works without `VIBRATE`; if it does, remove its row in `spec.md` §5, otherwise declare it (run in Phase 5 Device testing).
 - [x] Set `android:allowBackup="false"` and `android:dataExtractionRules` excluding all data from cloud backup and device transfer (`spec.md` §5).
-- [ ] Review required manifest declarations.
-- [ ] Review runtime permission requirements.
-- [ ] Validate behavior on the `minSdk` and `targetSdk` versions.
+- [x] Review required manifest declarations: the service (`exported="false"`, `specialUse` with its subtype property), the permissions, `allowBackup`, `dataExtractionRules` and `networkSecurityConfig` match `spec.md` §2.8 and §5.
+- [x] Review runtime permission requirements: `POST_NOTIFICATIONS` (API 33+) is the only runtime permission, requested on monitoring start and alert creation; below API 33 the Home warning relies on `areNotificationsEnabled()`. The others are normal permissions; the battery exemption is a system dialog.
+- [ ] Validate behavior on the `minSdk` and `targetSdk` versions. The service Robolectric tests run on API 26 and 37; the device check is in Phase 5 Device testing (different Android versions).
 - [ ] Document manufacturer-specific battery restrictions.
-- [ ] Validate service startup restrictions.
+- [x] Validate service startup restrictions: monitoring starts only from a user action in the foreground (a refused start is caught on Home); the only background start is the `START_STICKY` restart, whose refusal ends as Interrupted, with Robolectric tests.
 
 ### Service implementation
 

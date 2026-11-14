@@ -32,7 +32,8 @@ import org.robolectric.android.controller.ServiceController
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(application = TestApp::class)
+// minSdk and the newest SDK Robolectric runs (roadmap Phase 4: validate on minSdk and targetSdk).
+@Config(application = TestApp::class, sdk = [26, Config.NEWEST_SDK])
 class PriceMonitorServiceTest {
     private val app = RuntimeEnvironment.getApplication() as TestApp
     private val notifications = shadowOf(app.getSystemService(NotificationManager::class.java))
