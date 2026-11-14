@@ -18,6 +18,7 @@ import io.github.allisson.bitcoinalert.domain.model.PriceAlert
 import io.github.allisson.bitcoinalert.domain.model.Ticker
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.service.MonitoringController
+import io.github.allisson.bitcoinalert.ui.launchUserWrite
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -28,7 +29,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.coroutines.launch
 
 private const val STALE_MILLIS = 10_000L
 
@@ -91,7 +91,7 @@ class HomeViewModel(
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun startMonitoring() {
-        viewModelScope.launch {
+        viewModelScope.launchUserWrite {
             try {
                 monitoringController.start()
             } catch (e: IllegalStateException) {
@@ -102,11 +102,11 @@ class HomeViewModel(
     }
 
     fun stopMonitoring() {
-        viewModelScope.launch { monitoringController.stop() }
+        viewModelScope.launchUserWrite { monitoringController.stop() }
     }
 
     fun selectTimeframe(timeframe: Timeframe) {
-        viewModelScope.launch { settings.setTimeframe(timeframe) }
+        viewModelScope.launchUserWrite { settings.setTimeframe(timeframe) }
     }
 
     fun retryCandles() = candleRepository.retry()
