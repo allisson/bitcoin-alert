@@ -457,7 +457,7 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 
 ### Documentation
 
-- [ ] Create the adaptive launcher icon (Phase 0 ships the system default icon).
+- [x] Create the adaptive launcher icon: a white bell with the bitcoin sign cut out, on the theme's orange, with the same foreground as the themed (monochrome) icon. Checked on the Galaxy A54 (One UI squircle mask).
 - [ ] Write installation instructions.
 - [ ] Document application permissions.
 - [ ] Document monitoring behavior.
