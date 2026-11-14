@@ -3,6 +3,7 @@ package io.github.allisson.bitcoinalert.ui.alerts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -203,7 +204,8 @@ private fun AlertRow(
         // The direction is in the text next to it.
         Icon(painterResource(if (above) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down), null, Modifier.size(20.dp), tint = color)
         Column(Modifier.weight(1f)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // At large font scales the target moves below the direction instead of wrapping mid-price.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     stringResource(if (above) R.string.above else R.string.below),
                     Modifier.alignByBaseline(),
