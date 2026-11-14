@@ -81,6 +81,7 @@ import io.github.allisson.bitcoinalert.ui.theme.MonoFamily
 import java.math.BigDecimal
 import java.time.ZoneId
 import java.util.Locale
+import kotlinx.coroutines.delay
 
 private val CANDLE_WIDTH = 8.dp
 private val CANDLE_SPACING = 4.dp
@@ -124,7 +125,9 @@ fun CandleChart(
     // Written while drawing; Vico computes the axes only in a transaction, so a new window sends one.
     val visible = remember { mutableStateOf<ClosedFloatingPointRange<Double>?>(null) }
     LaunchedEffect(candles) {
-        snapshotFlow { visible.value }.collect { window ->
+        // Each transaction makes Vico lay out the axis again: send one only when the fit changes, at most
+        // every 150 ms, which cut janky frames while scrolling from 7-9% to 5% (spec.md §7).
+        snapshotFlow { visibleFit(candles, visible.value) }.collect { fit ->
             // Read before the transaction: Vico updates the scroll range before asking the condition.
             stickToEnd.atEnd = scrollState.value >= scrollState.maxValue - 1f
             val x = candles.map { it.openTime }
@@ -133,9 +136,10 @@ fun CandleChart(
                 columnModel { series(x, candles.map { it.volume }) }
                 extras {
                     it[RisingKey] = candles.filter { c -> c.close >= c.open }.map { c -> c.openTime.toDouble() }.toSet()
-                    visibleFit(candles, window)?.let { fit -> it[FitKey] = fit }
+                    fit?.let { f -> it[FitKey] = f }
                 }
             }
+            delay(150)
         }
     }
 
