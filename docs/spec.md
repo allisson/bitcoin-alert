@@ -692,7 +692,6 @@ Permissions:
 | `FOREGROUND_SERVICE` | Monitoring service. |
 | `FOREGROUND_SERVICE_SPECIAL_USE` | `specialUse` service type (API 34+). |
 | `POST_NOTIFICATIONS` | Monitoring and alert notifications (API 33+, runtime). |
-| `VIBRATE` | Alert vibration. Possibly unnecessary: with `minSdk` 26, vibration is a channel property. Remove it if the Phase 4 test shows channel vibration works without it. |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Battery optimization dialog, on user action (§2.8). |
 | `WAKE_LOCK` | Only if the screen-off tests require a `PARTIAL_WAKE_LOCK` (§2.8). Not declared otherwise. |
 
@@ -823,6 +822,27 @@ JVM tests (§3.1): Robolectric for Room and notifications, `MockWebServer` for R
 - Stopping the app from the Task Manager (Android 13+): expected state Interrupted; verify whether `START_STICKY` restarts it.
 - Foreground Service lifecycle.
 - Battery consumption.
+
+### Device test results
+
+Samsung Galaxy A54 (SM-A546E), Android 16 (API 36), One UI 8.5, debug APK, November 14, 2026. The app had the battery optimization exemption (One UI "Unrestricted") unless noted. Commands ran over `adb`; network tests over USB, since turning Wi-Fi off ends wireless debugging and every process `adb` started.
+
+| Test | Result |
+|---|---|
+| Chart overlays, dark and light themes | Long press opens the New alert sheet with the touched price. Labels stack without overlapping: two alerts pinned to the top, two pinned to the bottom, and two 79 apart near the price. |
+| Vibration without `VIBRATE` | Works. With the ringer on vibrate, the system vibrated for the alert notification (`dumpsys vibrator_manager`: `usage: NOTIFICATION`, 1111 ms, reason `Notification (<package>)`). `VIBRATE` is not declared. |
+| Swipe away from Recents | The service keeps running in the same process. |
+| Dismiss the monitoring notification | The notification goes away; the service keeps running. |
+| Stop from the Task Manager (One UI "Active apps") | The process is force-stopped (`fully stop … by user request`). `START_STICKY` did not restart it within 2 minutes. Home shows Interrupted. |
+| Process killed (`kill -9`) | Android kept the service record (`startRequested=true`, no process) but did not restart it within 6 minutes. Home shows Interrupted. |
+| Notification permission denied | Home shows the notifications warning; Settings opens the app's notification screen. On Android 13+ the app-level switch is the permission itself, so "app notifications off" is the same case. |
+| Price alerts channel blocked | Home shows the notifications warning; Settings opens the channel screen. |
+| Wi-Fi → mobile data | Reconnecting, then Connected 7.7 s after Wi-Fi went off. |
+| Mobile data → Wi-Fi | Connected 2.3 s after Wi-Fi came back; the mobile socket closed 6 s later and the client reconnected over Wi-Fi. |
+| No network for 40 s, and for 12 minutes | The service stays in the same process; backoff 1.1 s, 2.2 s, 4.7 s, 8 s, 19 s, 38 s, then about 65 s. Connected 7.2 s after Wi-Fi came back. |
+| Airplane mode for 40 s | Connected 7.1 s after it was turned off. |
+| Device reboot | Monitoring is not restarted; Home shows Interrupted with the Active alerts kept. |
+| API 26 (emulator, Android 8.0) | Launch, live price and chart, the battery optimization warning, monitoring start, and an Above alert that triggered and posted its notification. |
 
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
 
