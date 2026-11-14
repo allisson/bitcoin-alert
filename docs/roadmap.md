@@ -347,17 +347,17 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 
 Unit tests are written with each feature, in the phase that implements it.
 
-- [ ] Verify every unit test listed in `spec.md` §7 exists and passes; add the missing ones.
+- [x] Verify every unit test listed in `spec.md` §7 exists and passes; add the missing ones. Added: price placeholder, watchdog while `Reconnecting`, klines and control responses not refreshing the stale count. The `versionCode` derivation tests ship with that logic in Phase 6 GitHub Actions.
 
 ### Integration testing
 
-- [ ] Test Room persistence.
-- [ ] Test database transactions.
-- [ ] Test repository behavior.
-- [ ] Test WebSocket reconnection.
-- [ ] Test historical candle recovery.
-- [ ] Test notification generation.
-- [ ] Test service and alert engine integration.
+- [x] Test Room persistence. `AlertRepositoryTest` (Robolectric), including a database reopen.
+- [x] Test database transactions. `AlertRepositoryTest` (duplicate trigger, replaced cycle) and the database failure test in `PriceMonitorServiceTest`.
+- [x] Test repository behavior. `AlertRepositoryTest`, `CandleRepositoryTest`, `SettingsRepositoryTest`.
+- [x] Test WebSocket reconnection. `BinanceStreamClientTest` (fake connector), `OkHttpWebSocketConnectorTest` (`MockWebServer`) and the lost connection test in `PriceMonitorServiceTest`.
+- [x] Test historical candle recovery. `CandleRepositoryTest` (reload on a new `InEffect`, failed load and retry) and the `InEffect` tests in `BinanceStreamClientTest`.
+- [x] Test notification generation. `NotificationsTest` and the alert notification tests in `PriceMonitorServiceTest`.
+- [x] Test service and alert engine integration. `PriceMonitorServiceTest`.
 
 ### Device testing
 
