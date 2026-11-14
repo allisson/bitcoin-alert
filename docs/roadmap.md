@@ -308,14 +308,14 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 
 ### Lifecycle and recovery
 
-- [ ] Handle network disconnection.
-- [ ] Handle network reconnection.
-- [ ] Handle WebSocket failure.
-- [ ] Handle service interruption.
-- [ ] Handle application process termination.
-- [ ] Verify monitoring is not restarted after device reboot and the UI shows it as Interrupted.
+- [x] Handle network disconnection: the shared Binance client reconnects with backoff (Phase 1); the monitoring loop and its baseline survive the lost connection, so a crossing across the reconnection notifies, with a Robolectric test.
+- [x] Handle network reconnection: backoff reset on network availability and the half-open watchdog (Phase 1).
+- [x] Handle WebSocket failure: a failure or a failed subscription response is a lost connection (Phase 1).
+- [x] Handle service interruption: `START_STICKY` restart, refused restart and a database failure end as Interrupted, with Robolectric tests.
+- [x] Handle application process termination: the in-memory running flag resets, so the state is Interrupted; the restart checks `monitoringRequested`, with Robolectric tests. The device check is in Phase 5 Device testing.
+- [ ] Verify monitoring is not restarted after device reboot and the UI shows it as Interrupted (Phase 5 Device testing).
 - [x] Ensure users are informed when monitoring is inactive.
-- [ ] Validate behavior when the application is swiped away.
+- [ ] Validate behavior when the application is swiped away (Phase 5 Device testing).
 
 ### Battery validation
 
