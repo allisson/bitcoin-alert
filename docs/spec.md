@@ -751,10 +751,10 @@ Decisions and status:
 
 - Application ID: `io.github.allisson.bitcoinalert` (derived from the GitHub account; a new name, so registration needs no proof of ownership). Fixed in Phase 0; never changed after the first release.
 - 2-Step Verification on the Google Account: done.
-- Release signing key: pending (Phase 6).
+- Release signing key: done. Signing certificate SHA-256 fingerprint `FC:DF:A2:38:94:43:6F:FE:D0:DF:9A:7A:A8:DF:04:FC:4F:29:64:FA:7E:29:F1:43:56:E3:98:9A:8A:40:A6:70`, published in the README; `v0.1.0` and `v0.1.1` are signed with it.
 - Full distribution account (US$ 25, ID and proof of address) and application ID registration: pending (Phase 6).
 
-Record the outcome here when done: application ID registered, signing certificate SHA-256 fingerprint registered, and the installation path documented for users.
+Record the outcome here when done: application ID registered and signing certificate SHA-256 fingerprint registered. The installation path for users is documented in the README (download, checksum, fingerprint, install unknown apps).
 
 Sources: [Android Developers Blog, 2026-06](https://android-developers.googleblog.com/2026/06/android-developer-verification.html), [Android Developers Blog, 2026-03](https://android-developers.googleblog.com/2026/03/android-developer-verification-rolling-out-to-all-developers.html), [Register on Android Developer Console](https://developer.android.com/developer-verification/guides/android-developer-console), [Limited distribution account](https://developer.android.com/developer-verification/guides/limited-distribution), [Full distribution account](https://developer.android.com/developer-verification/guides/full-distribution), [FAQ](https://developer.android.com/developer-verification/guides/faq), [Limited distribution devices](https://support.google.com/android-developer-console/answer/17131204?hl=en).
 
@@ -843,6 +843,9 @@ Samsung Galaxy A54 (SM-A546E), Android 16 (API 36), One UI 8.5, debug APK, Novem
 | Airplane mode for 40 s | Connected 7.1 s after it was turned off. |
 | Device reboot | Monitoring is not restarted; Home shows Interrupted with the Active alerts kept. |
 | API 26 (emulator, Android 8.0) | Launch, live price and chart, the battery optimization warning, monitoring start, and an Above alert that triggered and posted its notification. |
+| Release APK `v0.1.0`, cold start (`am start -W -S`, `TotalTime`) | 296 to 364 ms over 5 starts. The debug APK took 1185 to 1227 ms measured the same way. |
+| Release APK `v0.1.0`, chart scrolling (`dumpsys gfxinfo`, 10 swipes, 60 Hz display) | 232 frames, 11.64% janky; frame time 19 ms at the 50th percentile, 30 ms at the 90th, 44 ms at the 99th. |
+| Release APK update, `v0.1.0` → `v0.1.1` (`adb install -r`) | Installed as an update: `versionCode` 100 → 101, `firstInstallTime` kept. Both APKs carry the same signing certificate. |
 
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
 
