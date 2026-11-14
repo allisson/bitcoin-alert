@@ -8,6 +8,12 @@ import java.util.Locale
 /** A scale-2 price with the locale's grouping and exactly 2 decimal places. */
 fun formatPrice(price: BigDecimal, locale: Locale): String = twoDecimals(locale).format(price)
 
+/** A scale-2 percentage with the locale's decimal separator, no grouping; [signed] adds `+` to positive values. */
+fun formatPercent(percent: BigDecimal, locale: Locale, signed: Boolean = false): String {
+    val text = twoDecimals(locale).apply { isGroupingUsed = false }.format(percent)
+    return if (signed && percent.signum() > 0) "+$text" else text
+}
+
 enum class ChangeDirection { Up, Down, Flat }
 
 data class ChangeDisplay(val text: String, val direction: ChangeDirection)

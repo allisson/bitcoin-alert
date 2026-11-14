@@ -29,6 +29,9 @@ class BitcoinAlertApp : Application() {
     /** Home's destination is at least `STARTED` (set by the Home screen). */
     val homeVisible = MutableStateFlow(false)
 
+    /** Alerts' destination is at least `STARTED` (set by the Alerts screen). */
+    val alertsVisible = MutableStateFlow(false)
+
     val httpClient by lazy { OkHttpClient() }
 
     val binanceRestClient by lazy { BinanceRestClient(httpClient) }
@@ -61,7 +64,7 @@ class BitcoinAlertApp : Application() {
         super.onCreate()
         candleRepository // subscribes to kline events before any stream is requested
         appScope.launch {
-            desiredStreamsFlow(homeVisible, settingsRepository.timeframe).collect(binanceStreamClient::setDesiredStreams)
+            desiredStreamsFlow(homeVisible, alertsVisible, settingsRepository.timeframe).collect(binanceStreamClient::setDesiredStreams)
         }
     }
 }

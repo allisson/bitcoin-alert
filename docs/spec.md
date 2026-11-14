@@ -480,10 +480,10 @@ Subscriptions:
 | Situation | Streams |
 |---|---|
 | Home visible | `btcusdt@ticker` + `btcusdt@kline_<selected interval>` |
-| Home not visible, monitoring running | `btcusdt@ticker` |
-| Home not visible, monitoring stopped | None — the connection is closed |
+| Alerts visible, or monitoring running | `btcusdt@ticker` |
+| Neither screen visible, monitoring stopped | None — the connection is closed |
 
-"Home not visible" includes the Alerts and History screens and the application in the background. Home becoming not visible takes effect after one second, and becoming visible again within it cancels it: a configuration change (rotation, theme, font size) stops and restarts the activity, and must not close and reopen the connection.
+Alerts needs the ticker for the distance from the current price to each target (§4). "Not visible" includes the History screen and the application in the background. Home or Alerts becoming not visible takes effect after one second, and becoming visible again within it cancels it: a configuration change (rotation, theme, font size) stops and restarts the activity, and must not close and reopen the connection. Going from Home to Alerts keeps the ticker and drops the kline stream after that second.
 
 With no stream needed, the client is in an internal `Idle` state (never shown in the UI): the connection is closed on purpose, and the backoff, the dead connection watchdog and the network callback do nothing. It leaves `Idle` (to `Connecting`) only when the desired stream set becomes non-empty. Entering `Idle` resets the backoff counter (§2.8): a deliberate close is not a failure, so the first attempt after leaving `Idle` runs without delay. Leaving `Idle` takes a user navigation, so this cannot approach Binance's attempt limit.
 
@@ -612,7 +612,7 @@ The application should contain three primary areas:
 - List of active alerts.
 - List of triggered alerts.
 - List of disabled alerts.
-- Within each list, newest first: `ORDER BY createdAt DESC, id DESC`. Never sort by `targetPrice` in SQL: it is stored as a string, so `"90000.00"` would sort after `"100000.00"`. Sorting by target, if ever added, is done in Kotlin with `BigDecimal.compareTo`.
+- Within the Active and Disabled lists, newest first: `ORDER BY createdAt DESC, id DESC`. The Triggered list shows the most recent trigger first: `triggeredAt DESC, id DESC`. Never sort by `targetPrice` in SQL: it is stored as a string, so `"90000.00"` would sort after `"100000.00"`. Sorting by target, if ever added, is done in Kotlin with `BigDecimal.compareTo`.
 - Create alert action.
 - Enable/disable actions.
 - Delete action.
@@ -638,7 +638,10 @@ The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`):
 - Numbers (prices, the 24-hour change, OHLC, axes, timeframes) use JetBrains Mono, bundled in the APK with its SIL Open Font License (`assets/licenses/`), so digits keep their width as the price updates. Downloadable fonts are not used: they need Google Play services and a network call. Other text uses the system font.
 - A bottom navigation bar with Market (Home), Alerts and History. Home stays at the bottom of the back stack, so Back from Alerts or History returns to it.
 - Home: the pair with the connection status as a pill (`Connected`, `Connecting`, `Reconnecting`) and a separate `Stale` pill; the price; the 24-hour change; timeframe tabs; the chart.
-- Alerts: each Active alert shows the distance from the current price to its target, as a percentage and a bar; the Alerts navigation item shows the number of Active alerts as a badge. Delete is an explicit action in the alert's menu, not a swipe.
+- Alerts: the current price under the title, then the Active, Triggered and Disabled sections; empty sections are hidden. The Alerts navigation item shows the number of Active alerts as a badge (hidden at zero).
+  - Each Active alert shows the distance from the current price to its target, `|target − price| / price` with 2 decimal places (`HALF_UP`), and a bar filled `1 − distance / 10%`, clamped to [0, 1] (full at the target, empty at 10% or more). When the price is already past the target (above it for `ABOVE`, below it for `BELOW`), the alert shows "Price above target · waits for a crossing" (or below) and no bar. Without a price, only the creation date.
+  - Actions by state: Active has a switch (on; turning it off disables) and Disabled a switch (off; turning it on enables); Triggered has a Reactivate button and shows the observed price and trigger time from its history entry. Every alert has a menu with Delete, an explicit action instead of a swipe, confirmed by a dialog ("Its history stays").
+  - New alert opens a bottom sheet: Above/Below segmented buttons, the target field, the parsed target and its percentage from the current price ("Saves as 100,000.50 · +2.66% from now"), the validation error inline, and Create, enabled only for a valid target. A target already past the current price for the chosen direction is allowed, with a warning that the alert fires only after the price comes back and crosses it. There are no quick-value chips.
 - History: entries grouped by day (device time zone), newest first.
 - The target price is typed with the system decimal keyboard.
 
