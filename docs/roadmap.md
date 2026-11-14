@@ -455,7 +455,6 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 - [x] Validate application startup performance on the device with the Release APK: 296 to 364 ms cold start on the Galaxy A54 (`spec.md` §7, Device test results).
 - [x] Measure chart rendering performance on the device with the Release APK: 11.64% janky frames while scrolling, 19 ms median frame time on a 60 Hz display (`spec.md` §7, Device test results).
 - [ ] Decide whether chart scrolling needs profiling: the median frame (19 ms) is over the 16.7 ms budget of a 60 Hz display.
-- [ ] Fix the Triggered alert row on Alerts: the target wraps onto two lines (`65.760,` / `00`), squeezed by the Reactivate button (seen on the Galaxy A54, default font size; `docs/screenshots/alerts.png`).
 
 ### Documentation
 
