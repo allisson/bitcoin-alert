@@ -21,12 +21,14 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.android.controller.ServiceController
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -49,10 +51,16 @@ class PriceMonitorServiceTest {
         fail("condition not met")
     }
 
+    private val services = mutableListOf<ServiceController<PriceMonitorService>>()
+
+    /** Cancels each service's loop: otherwise it keeps running on the shared main looper into the next test. */
+    @After
+    fun destroyServices() = services.forEach { it.destroy() }
+
     /** Android restarting the sticky service after the process died (spec.md §2.8). */
     private fun restart(requested: Boolean): PriceMonitorService {
         runBlocking { app.settingsRepository.setMonitoringRequested(requested) }
-        return Robolectric.buildService(PriceMonitorService::class.java).create().get()
+        return Robolectric.buildService(PriceMonitorService::class.java).create().also(services::add).get()
             .also { it.onStartCommand(null, 0, 1) }
     }
 
@@ -96,6 +104,21 @@ class PriceMonitorServiceTest {
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(emptyList<Notification>(), alertNotifications())
         assertEquals(0, runBlocking { app.alertRepository.history.first() }.size)
+    }
+
+    @Test
+    fun `a lost connection keeps the loop and the baseline, so a crossing across the reconnection notifies`() {
+        runBlocking { app.alertRepository.create(ABOVE, BigDecimal("100.00")) }
+        val service = startEvaluating()
+        price("99.00")
+        val lost = app.listener!!
+        lost.onClosed()
+        // The client reconnects after its backoff delay with a new connection.
+        waitUntil { app.listener !== lost }
+        app.listener!!.onOpen()
+        price("101.00")
+        waitUntil { alertNotifications().size == 1 }
+        assertFalse(shadowOf(service).isStoppedBySelf)
     }
 
     @Test
