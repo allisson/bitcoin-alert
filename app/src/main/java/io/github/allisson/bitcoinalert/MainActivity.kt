@@ -32,8 +32,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.allisson.bitcoinalert.domain.model.AlertState
-import io.github.allisson.bitcoinalert.ui.PlaceholderScreen
 import io.github.allisson.bitcoinalert.ui.alerts.AlertsScreen
+import io.github.allisson.bitcoinalert.ui.history.HistoryScreen
 import io.github.allisson.bitcoinalert.ui.home.HomeScreen
 import io.github.allisson.bitcoinalert.ui.theme.BitcoinAlertTheme
 import kotlinx.coroutines.flow.map
@@ -97,9 +97,7 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController, startDestination = Home, modifier = Modifier.padding(innerPadding)) {
                         composable<Home> { HomeScreen() }
                         composable<Alerts> { AlertsScreen() }
-                        composable<History> {
-                            PlaceholderScreen(stringResource(R.string.history), stringResource(R.string.history_placeholder))
-                        }
+                        composable<History> { HistoryScreen() }
                     }
                 }
             }
