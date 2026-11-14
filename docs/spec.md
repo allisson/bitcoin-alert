@@ -281,7 +281,8 @@ Notification behavior:
 - Avoid duplicate notifications for the same alert activation.
 - Post each alert notification with its history entry id as the tag and a fixed alert ID (`notify(historyId.toString(), ALERT_NOTIFICATION_ID, …)`; the id is the one the history insert returns). Android identifies a notification by tag and ID, so alerts triggered by the same ticker update do not replace each other, and no alert can replace the monitoring notification.
 - Notify only after the trigger transaction commits (§3.5). If the process dies between commit and notification, that notification is lost; the trigger remains in the history. This is accepted: at most one notification per activation.
-- Tapping an alert notification opens the History screen.
+- Alert notification content: title `BTC above 100,000.00` (or `below`), text `Observed 100,012.34 at 14:32`, in the device locale, time zone and 12/24-hour setting; the notification time is the trigger time.
+- Tapping an alert notification opens the History screen and dismisses the notification.
 - Respect Android notification permissions and user-configured notification channel settings. Sound and vibration are channel properties on Android 8+; after the channel is created, only the user can change them.
 - Request `POST_NOTIFICATIONS` (Android 13+), while it is not granted, every time the user starts monitoring or creates an alert. After two denials Android no longer shows the dialog, so repeated requests are harmless. The request does not block the action: monitoring starts (and the alert is saved) immediately, without waiting for the dialog result. If denied, or if notifications are otherwise disabled (§2.1), monitoring still runs, alerts are still recorded in history, and the main screen shows the warning from §2.1.
 
@@ -534,7 +535,7 @@ Responsibilities:
 
 The alert engine must be deterministic and independently testable.
 
-The engine keeps the last price seen by each Active `(id, activationCycle)`. A cycle seen for the first time takes the price as its baseline and is evaluated from the next price; every other cycle compares its stored price with the new one, then stores the new one. This is the `previousPrice` of §2.5 without a special case for baselines. A WebSocket reconnection keeps the stored prices; a monitoring start or service restart clears them. The engine returns the crossed alerts; the trigger transaction (§3.5) is the only duplicate-trigger guard, so a cycle replaced between the evaluation and the transaction changes nothing.
+The engine keeps the last price seen by each Active `(id, activationCycle)`. A cycle seen for the first time takes the price as its baseline and is evaluated from the next price; every other cycle compares its stored price with the new one, then stores the new one. This is the `previousPrice` of §2.5 without a special case for baselines. A WebSocket reconnection keeps the stored prices; each monitoring start or service restart uses a new engine, with no stored prices. The service evaluates only ticker updates received after it subscribes: the ticker value already held when monitoring starts (e.g. left from Home) is not a baseline. The engine returns the crossed alerts; the trigger transaction (§3.5) is the only duplicate-trigger guard, so a cycle replaced between the evaluation and the transaction changes nothing.
 
 ### 3.5 Persistence
 
@@ -755,7 +756,7 @@ Testing must cover the critical application behavior.
 - Decimal price comparisons, including normalization of 8-decimal Binance prices to scale 2 and comparison with `compareTo` across different scales; a price finer than the tick size is discarded without a crash; volume and the 24-hour change are not normalized.
 - ABOVE and BELOW crossing detection.
 - Per-cycle baseline on creation, enabling and reactivation, including a disable/enable between two ticker updates; each enabling or reactivation increments `activationCycle`; the baseline of a cycle that is no longer Active is dropped.
-- `previousPrice` kept across reconnections and reset on monitoring start or service restart.
+- `previousPrice` kept across reconnections; a monitoring start or service restart (a new engine) takes a new baseline from the first ticker update after it, not from the value already held.
 - Alert state transitions (trigger, disable, enable, reactivate).
 - Target price validation: `100000.50` and `100000,50` both parse to `100000.50` in pt-BR and en-US; `100.000,50`, `100,000.50`, more than one separator, more than 2 decimal places (including trailing zeros: `1.000`, `100,000`), zero, `.50` and `100.` are rejected; ` 100.50 ` (surrounding spaces) and `0100` are accepted; `100` is normalized to `100.00`.
 - 24-hour change display, with the device locale's decimal separator: `-3.829` shows `-3.83` (pt-BR `-3,83`) with a down arrow; `-0.004` shows `0.00` with no sign and no arrow.

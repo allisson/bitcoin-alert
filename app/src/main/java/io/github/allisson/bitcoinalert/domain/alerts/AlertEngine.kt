@@ -8,20 +8,15 @@ import java.math.BigDecimal
 /**
  * Detects price crossings (spec.md §2.5). Each activation cycle `(id, activationCycle)` keeps the
  * last price it saw: a cycle seen for the first time takes the price as its baseline and is
- * evaluated from the next one. Not thread-safe: call it from one coroutine.
+ * evaluated from the next one. One engine per monitoring session: a start or service restart
+ * creates a new one, so every Active alert takes a new baseline, while a WebSocket reconnection
+ * keeps it. Not thread-safe: call it from one coroutine.
  */
 class AlertEngine {
     private val lastPrices = HashMap<Pair<String, Int>, BigDecimal>()
 
     /** Cycles with a baseline (for tests). */
     internal val trackedCycles: Set<Pair<String, Int>> get() = lastPrices.keys
-
-    /**
-     * Monitoring start or service restart: every Active alert takes the next price as its new
-     * baseline. A WebSocket reconnection does not call this, so a crossing during the gap
-     * triggers on the first price after it.
-     */
-    fun reset() = lastPrices.clear()
 
     /**
      * Returns the alerts in [alerts] whose Active cycle [price] crossed. The caller triggers each

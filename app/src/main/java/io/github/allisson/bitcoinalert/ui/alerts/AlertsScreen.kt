@@ -66,6 +66,7 @@ import io.github.allisson.bitcoinalert.ui.DateFormats
 import io.github.allisson.bitcoinalert.ui.home.formatPercent
 import io.github.allisson.bitcoinalert.ui.home.formatPrice
 import io.github.allisson.bitcoinalert.ui.rememberDateFormats
+import io.github.allisson.bitcoinalert.ui.rememberNotificationPermissionRequest
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
 import io.github.allisson.bitcoinalert.ui.theme.MonoFamily
 import java.math.BigDecimal
@@ -82,6 +83,7 @@ fun AlertsScreen(viewModel: AlertsViewModel = viewModel(factory = AlertsViewMode
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
     val dates = rememberDateFormats()
+    val requestNotifications = rememberNotificationPermissionRequest()
     var creating by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -129,6 +131,7 @@ fun AlertsScreen(viewModel: AlertsViewModel = viewModel(factory = AlertsViewMode
 
     if (creating) {
         NewAlertSheet(state.price, locale, onDismiss = { creating = false }) { direction, target ->
+            requestNotifications()
             viewModel.create(direction, target)
             creating = false
         }
