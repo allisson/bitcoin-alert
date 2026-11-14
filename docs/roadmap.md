@@ -285,7 +285,7 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 - [x] Warn on the main screen when Active alerts exist and monitoring is Stopped or Interrupted, with unit tests (`spec.md` §7).
 - [x] Offer the battery optimization exemption dialog on user action, from Home next to the monitoring control; hide the action once `isIgnoringBatteryOptimizations()` is `true`, re-evaluated on Home `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
 - [x] Evaluate alerts only while monitoring is running.
-- [ ] Implement connection status exposure.
+- [x] Implement connection status exposure: the connection state and the monitoring state are process-scoped `StateFlow`s shared by the service and the UI; Home shows them in the connection and stale pills and the monitoring row. The monitoring notification does not show the connection (`spec.md` §2.8).
 - [x] Implement service cleanup.
 - [x] Make `onStartCommand` idempotent: a repeated start must not open a second connection or evaluation loop (Android already keeps a single service instance).
 - [x] Wire the real monitoring state into the stream set derivation (Phase 1).

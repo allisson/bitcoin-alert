@@ -324,7 +324,7 @@ The service must:
 
 - Monitoring starts through an explicit user action.
 - A persistent notification must indicate that monitoring is active. It is not updated on every ticker message: Android drops notification updates posted too often. On Android 14+ the user can dismiss it; the service keeps running, and the main screen remains the source of truth for the monitoring state.
-- The monitoring notification (Monitoring channel) reads "Monitoring BTC/USDT" with the number of Active alerts, updated only when that number changes, and has a `Stop` action. Tapping it opens Home.
+- The monitoring notification (Monitoring channel) reads "Monitoring BTC/USDT" with the number of Active alerts, updated only when that number changes, and has a `Stop` action. Tapping it opens Home. It does not show the connection status: every reconnection (including Binance's routine 24-hour close) would update it, and Home shows the connection.
 - Users must be able to stop monitoring, from the main screen or from the notification action.
 - Monitoring keeps running with no Active alerts: only the user stops it.
 - Active alerts must remain persisted when monitoring is stopped.
