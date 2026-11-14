@@ -429,11 +429,11 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
   ```
 
 - [ ] Create the full distribution account at https://android.google.com/developerconsole/developers (`spec.md` §6): pay the one-time US$ 25 and verify identity with a government-issued photo ID, a proof of address, and an email and phone number (2-Step Verification is already on).
-- [ ] On the **Packages** page, register `io.github.allisson.bitcoinalert` with the SHA-256 fingerprint; wait for *Registered* (email notice). Done before the first release tag, so GitHub Releases installs keep working after the 2027 global rollout.
+- [ ] On the **Packages** page, register `io.github.allisson.bitcoinalert` with the SHA-256 fingerprint; wait for *Registered* (email notice). Done before the `v1.0.0` tag (`v0.*` pre-releases may ship first), so GitHub Releases installs keep working after the 2027 global rollout.
 - [ ] Record the outcome (application ID and signing certificate fingerprint registered) and the installation path in `spec.md` §6.
 - [ ] Configure signing credentials as GitHub Actions Secrets: `KEYSTORE_BASE64` (output of `base64 -i ~/keys/bitcoin-alert-release.jks`), `KEYSTORE_PASSWORD` and `KEY_ALIAS`. The PKCS12 keystore `keytool` generates uses the same password for the store and the key, so Gradle passes `KEYSTORE_PASSWORD` as both `storePassword` and `keyPassword`.
-- [ ] Configure Release signing.
-- [ ] Verify signing locally.
+- [x] Configure Release signing: Gradle reads `KEYSTORE_FILE`, `KEYSTORE_PASSWORD` and `KEY_ALIAS` from the environment, and the Release APK is unsigned without them. Checked with a throwaway key: `apksigner verify` printed its certificate.
+- [ ] Verify signing: download the `v0.1.0` APK and check that `apksigner verify --print-certs` prints the registered fingerprint (signing happens only in CI; the password never sits on the local machine).
 - [ ] Document secure backup of the signing key.
 - [ ] Verify that subsequent releases use the same signing identity.
 
@@ -441,8 +441,8 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 
 - [ ] Create the release workflow, with `permissions: contents: write` so the `GITHUB_TOKEN` can create the release.
 - [ ] Trigger builds from version tags.
-- [ ] Keep R8 minification and resource shrinking disabled for Release (`spec.md` §6).
-- [ ] Derive `versionCode` and `versionName` from the tag in one Gradle build logic function; fail on tags outside `vMAJOR.MINOR.PATCH` with MINOR/PATCH ≤ 99, on leading zeros and on `v0.0.0` (`spec.md` §6), with unit tests.
+- [x] Keep R8 minification and resource shrinking disabled for Release (`spec.md` §6).
+- [x] Derive `versionCode` and `versionName` from the tag in one Gradle build logic function; fail on tags outside `vMAJOR.MINOR.PATCH` with MINOR/PATCH ≤ 99, on leading zeros and on `v0.0.0` (`spec.md` §6), with unit tests (`buildSrc`, run in CI with `./gradlew -p buildSrc test`).
 - [ ] Configure Android build environment.
 - [ ] Run unit tests before building.
 - [ ] Build the Release APK and name it `bitcoin-alert-vX.Y.Z.apk` (Gradle outputs `app-release.apk`; the checksum file and the release asset use the final name; `spec.md` §6).

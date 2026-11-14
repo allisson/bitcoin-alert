@@ -14,9 +14,26 @@ android {
         applicationId = "io.github.allisson.bitcoinalert"
         minSdk = 26
         targetSdk = 37
-        // Builds without a version tag (spec.md §6). Phase 6 derives both from the tag.
-        versionCode = 1
-        versionName = "0.0.0-dev"
+        // The release workflow passes the tag as -PreleaseTag; other builds use the dev version (spec.md §6).
+        val version = versionFromTag(providers.gradleProperty("releaseTag").orNull)
+        versionCode = version.code
+        versionName = version.name
+    }
+
+    // Set only by the release workflow; without them the release APK is unsigned, and the workflow fails it.
+    val keystore = providers.environmentVariable("KEYSTORE_FILE").orNull
+    val keystorePassword = providers.environmentVariable("KEYSTORE_PASSWORD").orNull
+    val keyAlias = providers.environmentVariable("KEY_ALIAS").orNull
+    signingConfigs {
+        if (keystore != null && keystorePassword != null && keyAlias != null) {
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = keystorePassword
+                // keytool's PKCS12 keystore uses one password for the store and the key.
+                this.keyAlias = keyAlias
+                keyPassword = keystorePassword
+            }
+        }
     }
 
     buildTypes {
@@ -26,6 +43,7 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

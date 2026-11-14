@@ -33,6 +33,7 @@ kotlinx.serialization, Room, DataStore, Vico, Gradle Kotlin DSL with `gradle/lib
 ```bash
 ./gradlew assembleDebug          # debug build (applicationId suffix .debug)
 ./gradlew testDebugUnitTest      # all JVM tests: unit + Robolectric + MockWebServer
+./gradlew -p buildSrc test       # build logic tests (version from the release tag)
 ```
 
 Every automated test runs on the JVM. CI runs them without an emulator. Device tests (`spec.md` §7)
