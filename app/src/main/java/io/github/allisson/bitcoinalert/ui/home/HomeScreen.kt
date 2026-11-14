@@ -18,18 +18,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -37,6 +43,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -64,6 +71,12 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
     val monitoring by viewModel.monitoring.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
     val requestNotifications = rememberNotificationPermissionRequest()
+    val context = LocalContext.current
+    var device by remember { mutableStateOf<DeviceChecks?>(null) }
+    LifecycleResumeEffect(context) {
+        device = deviceChecks(context)
+        onPauseOrDispose {}
+    }
 
     Column(
         modifier = Modifier
@@ -75,6 +88,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
         PriceSection(state, locale)
         monitoring?.let {
             MonitoringRow(it, onStart = { requestNotifications(); viewModel.startMonitoring() }, onStop = viewModel::stopMonitoring)
+            device?.let { checks -> Warnings(homeWarnings(it, checks)) }
         }
         TimeframeTabs(state.timeframe, viewModel::selectTimeframe)
         CandlesArea(state.candles, locale, viewModel::retryCandles)
@@ -160,6 +174,49 @@ private fun MonitoringRow(monitoring: MonitoringUi, onStart: () -> Unit, onStop:
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (monitoring.state.canStop) OutlinedButton(onClick = onStop) { Text(stringResource(R.string.stop)) }
             if (monitoring.state.canStart) Button(onClick = onStart) { Text(stringResource(R.string.start)) }
+        }
+    }
+}
+
+@Composable
+private fun Warnings(warnings: HomeWarnings) {
+    val context = LocalContext.current
+    if (warnings.monitoringOff) WarningRow(R.drawable.ic_pause_circle, R.string.warning_monitoring_off)
+    warnings.notificationsFix?.let { fix ->
+        WarningRow(R.drawable.ic_notifications_off, R.string.warning_notifications_off, R.string.settings) {
+            context.startSettings(notificationSettingsIntent(context, fix))
+        }
+    }
+    if (warnings.batteryAction) {
+        WarningRow(R.drawable.ic_battery_alert, R.string.warning_battery, R.string.allow) {
+            context.startSettings(batteryExemptionIntent(context))
+        }
+    }
+}
+
+@Composable
+private fun WarningRow(icon: Int, text: Int, action: Int? = null, onAction: () -> Unit = {}) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(12.dp))
+            .padding(start = 12.dp, end = 4.dp)
+            .heightIn(min = 48.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // The text says what the icon shows.
+        Icon(painterResource(icon), null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.tertiary)
+        Text(
+            stringResource(text),
+            Modifier.weight(1f).padding(vertical = 8.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        if (action != null) {
+            TextButton(onClick = onAction) {
+                Text(stringResource(action), color = MaterialTheme.colorScheme.tertiary, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }

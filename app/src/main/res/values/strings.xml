@@ -64,6 +64,11 @@
     <string name="channel_monitoring">Monitoring</string>
     <string name="channel_alerts">Price alerts</string>
     <string name="monitoring_notification_title">Monitoring BTC/USDT</string>
+    <string name="warning_monitoring_off">Monitoring is off: active alerts are not checked</string>
+    <string name="warning_notifications_off">Notifications are off: alerts cannot reach you</string>
+    <string name="warning_battery">Battery optimization can pause monitoring</string>
+    <string name="settings">Settings</string>
+    <string name="allow">Allow</string>
     <string name="alert_notification_above">BTC above %1$s</string>
     <string name="alert_notification_below">BTC below %1$s</string>
     <string name="alert_notification_text">Observed %1$s at %2$s</string>

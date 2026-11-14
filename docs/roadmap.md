@@ -256,7 +256,7 @@ This is a critical phase because Android background execution restrictions can a
 
 - [ ] Review current Android Foreground Service requirements.
 - [x] Declare the `specialUse` Foreground Service type with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; start it with `ServiceCompat.startForeground`.
-- [ ] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below).
+- [ ] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below). `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is declared (4c); `VIBRATE` waits for the device check below.
 - [ ] Check whether alert vibration works without `VIBRATE`; if it does, remove the permission and its row in `spec.md` §5.
 - [x] Set `android:allowBackup="false"` and `android:dataExtractionRules` excluding all data from cloud backup and device transfer (`spec.md` §5).
 - [ ] Review required manifest declarations.
@@ -280,8 +280,8 @@ This is a critical phase because Android background execution restrictions can a
 - [x] Return `START_STICKY`; handle a refused restart as Interrupted; call `ServiceCompat.startForeground` first in every `onStartCommand`, before any suspending work; on a restart with a `null` intent, then `stopSelf()` if `monitoringRequested` is `false` (`spec.md` §2.8), with Robolectric tests calling `onStartCommand(null, 0, 1)` directly for both values (`spec.md` §7).
 - [x] Start: `startForegroundService`, then set the running flag, then write `monitoringRequested = true`; stop: write `false` before stopping the service, so a normal start or stop never shows Interrupted (`spec.md` §2.8), with unit tests.
 - [x] Display monitoring status and the monitoring control on the main screen: `Start` while Stopped, `Stop` while Running, both while Interrupted (`spec.md` §2.1), with unit tests.
-- [ ] Warn on the main screen when Active alerts exist and monitoring is Stopped or Interrupted, with unit tests (`spec.md` §7).
-- [ ] Offer the battery optimization exemption dialog on user action, from Home next to the monitoring control; hide the action once `isIgnoringBatteryOptimizations()` is `true`, re-evaluated on Home `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
+- [x] Warn on the main screen when Active alerts exist and monitoring is Stopped or Interrupted, with unit tests (`spec.md` §7).
+- [x] Offer the battery optimization exemption dialog on user action, from Home next to the monitoring control; hide the action once `isIgnoringBatteryOptimizations()` is `true`, re-evaluated on Home `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
 - [x] Evaluate alerts only while monitoring is running.
 - [ ] Implement connection status exposure.
 - [x] Implement service cleanup.
@@ -301,7 +301,7 @@ This is a critical phase because Android background execution restrictions can a
 - [x] Configure default notification sound.
 - [x] Configure vibration.
 - [x] Request notification permission, while not granted, on every monitoring start and alert creation, without blocking the action on the dialog result (`spec.md` §2.6).
-- [ ] Warn on the main screen when Active alerts exist and notifications are disabled: permission denied, app notifications off (`areNotificationsEnabled()`) or Price alerts channel blocked; the warning opens the matching system settings and is re-evaluated on Home `ON_RESUME` (`spec.md` §2.1), with unit tests (`spec.md` §7).
+- [x] Warn on the main screen when Active alerts exist and notifications are disabled: permission denied, app notifications off (`areNotificationsEnabled()`) or Price alerts channel blocked; the warning opens the matching system settings and is re-evaluated on Home `ON_RESUME` (`spec.md` §2.1), with unit tests (`spec.md` §7).
 - [ ] Verify behavior when the user dismisses the monitoring notification (Android 14+).
 
 ### Lifecycle and recovery
@@ -312,7 +312,7 @@ This is a critical phase because Android background execution restrictions can a
 - [ ] Handle service interruption.
 - [ ] Handle application process termination.
 - [ ] Verify monitoring is not restarted after device reboot and the UI shows it as Interrupted.
-- [ ] Ensure users are informed when monitoring is inactive.
+- [x] Ensure users are informed when monitoring is inactive.
 - [ ] Validate behavior when the application is swiped away.
 
 ### Battery validation
