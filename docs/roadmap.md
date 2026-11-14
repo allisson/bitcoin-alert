@@ -390,6 +390,7 @@ These include the Phase 4 device checks; record the results in `spec.md` and clo
 - [x] Remove debug-only code from Release builds. None: `app/src/debug` holds only the debug app name.
 - [x] Verify no unnecessary personal data is collected. No accounts, analytics or backend; the only network traffic is the Binance public market data.
 - [x] Verify alert data is not included in Android backups or device-to-device transfer (`allowBackup="false"`, `dataExtractionRules`). Both set; the rules exclude every domain from cloud backup and device transfer. The on-device check is in `spec.md` §8 (Phase 7).
+- [x] Keep a Triggered alert's target on one line. With the Reactivate button trailing, the target wrapped (`65.760,` / `00`) on the Galaxy A54; the button now sits below the observed price, and the target stays on one line.
 
 ### Chart alert lines
 

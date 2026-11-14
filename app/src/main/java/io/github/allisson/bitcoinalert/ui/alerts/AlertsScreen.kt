@@ -96,9 +96,10 @@ fun AlertsScreen(viewModel: AlertsViewModel = viewModel(factory = AlertsViewMode
                     val at = dates.dateTime(alert.triggeredAt!!)
                     val subtitle = observed?.let { stringResource(R.string.hit, formatPrice(it, locale), at) }
                         ?: stringResource(R.string.triggered_at, at)
-                    AlertRow(alert, locale, subtitle, onDelete = { deleting = alert.id }) {
-                        OutlinedButton({ viewModel.reactivate(alert.id) }) { Text(stringResource(R.string.reactivate)) }
-                    }
+                    // Below the text, not trailing: next to the menu the button left the target too narrow and it wrapped.
+                    AlertRow(alert, locale, subtitle, onDelete = { deleting = alert.id }, below = {
+                        OutlinedButton({ viewModel.reactivate(alert.id) }, Modifier.padding(top = 6.dp)) { Text(stringResource(R.string.reactivate)) }
+                    })
                 }
                 section(R.string.state_disabled, sections.disabled) { alert ->
                     AlertRow(alert, locale, stringResource(R.string.off_created, dates.date(alert.createdAt)), onDelete = { deleting = alert.id }) {
@@ -188,7 +189,8 @@ private fun AlertRow(
     subtitle: String,
     onDelete: () -> Unit,
     bar: Float? = null,
-    trailing: @Composable () -> Unit,
+    below: (@Composable () -> Unit)? = null,
+    trailing: @Composable () -> Unit = {},
 ) {
     val above = alert.direction == AlertDirection.ABOVE
     val color = if (above) LocalPriceColors.current.up else LocalPriceColors.current.down
@@ -228,6 +230,7 @@ private fun AlertRow(
                     drawStopIndicator = {},
                 )
             }
+            below?.invoke()
         }
         trailing()
         AlertMenu(onDelete)
