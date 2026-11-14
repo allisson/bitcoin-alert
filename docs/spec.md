@@ -737,26 +737,27 @@ The debug build type uses `applicationIdSuffix = ".debug"` (`io.github.allisson.
 
 ### Distribution risk: Android developer verification
 
-Google requires apps installed on certified Android devices to come from a verified developer with a registered application ID. Enforcement started on September 30, 2026 in Brazil, Indonesia, Singapore and Thailand, and expands globally in 2027.
+Google requires apps installed on certified Android devices to come from a verified developer with a registered application ID. Enforcement started on September 30, 2026 in Brazil, Indonesia, Singapore and Thailand, only for apps installed from a list of participating stores; it expands globally, to every install source, in 2027.
 
-What is known (sources checked on 2026-11-13):
+What is known (sources checked on 2026-11-14):
 
-- Unregistered apps can still be installed through `adb` or through the "advanced flow" for experienced users. Unregistered package names cannot be installed through the normal flow on certified devices in Brazil.
+- An APK downloaded directly (as from GitHub Releases) is not covered by the September 2026 enforcement; it installs normally until the global rollout. Unregistered apps can always be installed through `adb`, and after the rollout through the "advanced flow" (a one-time setup: developer options, a 24-hour wait, then an "unverified developer" warning on each install).
 - Apps distributed only outside Google Play are registered in the Android Developer Console. Registering a package name requires the SHA-256 certificate fingerprint of the app's signing key. A package name already in use outside the console also requires proof of ownership: an APK signed with that key, carrying a snippet the console provides.
-- The free limited distribution account is available to everyone. It is meant for hobbyists and personal use, with no government ID required. It needs a Google Account with 2-Step Verification, a linked Google payments profile (legal name and address) and a contact email. It registers apps and shares them with up to 50 devices whose users authorize them through a QR code or link handshake.
+- The free limited distribution account is meant for hobbyists and personal use, with no government ID required. It registers apps, but only devices authorized in the console (up to 50 at a time, through a QR code or link handshake; Google's pages also say 20) install them normally; any other device needs the advanced flow or `adb`. A removed device stops installing and updating the account's apps.
+- The full distribution account costs a one-time US$ 25 and allows unlimited apps and installs. An individual provides a government-issued photo ID, a proof of address, and an email and phone number verified by a one-time code.
 
-The limited distribution account fits this application (personal use). Development builds installed through Android Studio or `adb` are exempt, so registration is needed only before the first release is installed from GitHub Releases. It is done in Phase 6, before the first release tag.
+**Decision: full distribution account.** The APK is public on GitHub Releases, so anyone who downloads it must be able to install it without being on a device list. The same account also registers the developer's other personal apps. The limited account was rejected because only authorized devices would install the app normally. Registration is done in Phase 6, before the first release tag, so installs keep working when the global rollout reaches sideloaded apps. Development builds installed through Android Studio or `adb` are exempt.
 
 Decisions and status:
 
 - Application ID: `io.github.allisson.bitcoinalert` (derived from the GitHub account; a new name, so registration needs no proof of ownership). Fixed in Phase 0; never changed after the first release.
 - 2-Step Verification on the Google Account: done.
 - Release signing key: pending (Phase 6).
-- Limited distribution account and application ID registration: pending (Phase 6).
+- Full distribution account (US$ 25, ID and proof of address) and application ID registration: pending (Phase 6).
 
 Record the outcome here when done: application ID registered, signing certificate SHA-256 fingerprint registered, and the installation path documented for users.
 
-Sources: [Android Developers Blog, 2026-06](https://android-developers.googleblog.com/2026/06/android-developer-verification.html), [Android Developers Blog, 2026-03](https://android-developers.googleblog.com/2026/03/android-developer-verification-rolling-out-to-all-developers.html), [Register on Android Developer Console](https://developer.android.com/developer-verification/guides/android-developer-console), [Limited distribution account](https://developer.android.com/developer-verification/guides/limited-distribution).
+Sources: [Android Developers Blog, 2026-06](https://android-developers.googleblog.com/2026/06/android-developer-verification.html), [Android Developers Blog, 2026-03](https://android-developers.googleblog.com/2026/03/android-developer-verification-rolling-out-to-all-developers.html), [Register on Android Developer Console](https://developer.android.com/developer-verification/guides/android-developer-console), [Limited distribution account](https://developer.android.com/developer-verification/guides/limited-distribution), [Full distribution account](https://developer.android.com/developer-verification/guides/full-distribution), [FAQ](https://developer.android.com/developer-verification/guides/faq), [Limited distribution devices](https://support.google.com/android-developer-console/answer/17131204?hl=en).
 
 ## 7. Testing Requirements
 
