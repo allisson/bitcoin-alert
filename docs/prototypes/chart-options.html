@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candle Chart Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+:root {
+  --font: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --page: #E6E9ED; --bg: #FFFFFF; --surface: #F3F5F7; --surface2: #E7EBEF; --text: #0F1419; --muted: #5B6672; --line: #E1E5EA;
+  --up: #0A8754; --down: #D1213F; --accent: #F7931A; --onaccent: #1F1300; --bezel: #15181C;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #040608; --bg: #0B0E11; --surface: #141920; --surface2: #1D242D; --text: #E8EDF2; --muted: #8A96A3; --line: #222A33;
+  --up: #2EBD85; --down: #F6465D; --accent: #F7931A; --onaccent: #1F1300; --bezel: #262B32;
+} }
+:root[data-theme="dark"] {
+  --page: #040608; --bg: #0B0E11; --surface: #141920; --surface2: #1D242D; --text: #E8EDF2; --muted: #8A96A3; --line: #222A33;
+  --up: #2EBD85; --down: #F6465D; --accent: #F7931A; --onaccent: #1F1300; --bezel: #262B32;
+}
+.phone { height: 640px; }
+.head { padding: 6px 16px 0; display: flex; align-items: baseline; gap: 10px; }
+.head b { font-size: 14px; font-weight: 600; }
+.head .px { font-family: var(--mono); font-size: 22px; font-weight: 600; margin-left: auto; }
+.head .chg { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--up); }
+.tabs { display: flex; gap: 4px; padding: 12px 12px 6px; align-items: center; }
+.tabs button { flex: 1; padding: 7px 0; border-radius: 8px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); font-weight: 500; }
+.tabs button.on { background: var(--surface2); color: var(--text); font-weight: 600; }
+.mode { display: flex; background: var(--surface); border-radius: 8px; padding: 2px; margin: 0 12px 4px; }
+.mode button { flex: 1; padding: 5px 0; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.mode button.on { background: var(--bg); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.info { font-family: var(--mono); font-size: 10.5px; color: var(--muted); padding: 4px 16px 4px; min-height: 40px; }
+.info .r1 { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+.info .r1 b { color: var(--text); font-weight: 600; font-size: 11.5px; }
+.info .grid4 { display: grid; grid-template-columns: repeat(5, auto); gap: 0 10px; justify-content: start; }
+.info .grid4 span { display: flex; flex-direction: column; }
+.info .grid4 b { color: var(--text); font-weight: 500; }
+.info .old { display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.info .old b { color: var(--text); font-weight: 500; }
+.chartbox { padding: 2px 0 0 8px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.chart text { font-family: var(--mono); }
+.chart .xlab { fill: var(--muted); font-size: 9.5px; }
+.chart .cross { stroke: var(--muted); stroke-dasharray: 2 3; stroke-width: 1; }
+.chart .ptag rect { fill: var(--text); }
+.chart .ptag text { fill: var(--bg); font-size: 9.5px; font-weight: 650; }
+.chart .ltag text { fill: #fff; font-size: 9.5px; font-weight: 650; }
+.chart .lastl { stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .hl { fill: var(--muted); font-size: 9.5px; }
+.chart .hl line { stroke: var(--muted); }
+.chart .tip rect { fill: var(--surface2); stroke: var(--line); }
+.chart .tip text { fill: var(--muted); font-size: 9.5px; }
+.chart .tip text b, .chart .tip .v { fill: var(--text); font-weight: 600; }
+.chart .pending { stroke: var(--accent); stroke-width: 1.5; }
+.hint { font-size: 11.5px; color: var(--muted); padding: 6px 16px 0; }
+.newalert { margin: 8px 12px 0; padding: 10px 12px; border-radius: 12px; background: var(--surface); display: none; align-items: center; gap: 10px; font-size: 12.5px; }
+.newalert.show { display: flex; }
+.newalert span { flex: 1; }
+.newalert b { font-family: var(--mono); }
+.newalert button { font-weight: 700; color: var(--accent); font-size: 12.5px; }
+.legend { display: flex; gap: 12px; padding: 6px 16px 0; font-size: 11px; color: var(--muted); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 14px; border-top: 1.5px dashed; vertical-align: middle; margin-right: 4px; }
+.notes section p { font-size: 13.5px; line-height: 1.55; color: var(--muted); margin-bottom: 8px; }
+.notes .rec { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="top">
+  <div>
+    <h1>Candle chart · three options</h1>
+    <p>Same market data in all three. Tap a candle to select it (tap again to clear), switch the timeframe tabs, and use the light/dark toggle. In option 2, press and hold on the chart to place a new alert line. Every option stays in one Vico chart with the volume sharing the time axis (spec.md §2.3).</p>
+  </div>
+  <button class="toggle" data-theme-toggle>Light / dark</button>
+</div>
+
+<div class="row">
+  <div class="screen"><h2>1 · Refined</h2>
+    <div class="phone" id="p1">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="head"><b>BTC/USDT</b><span class="px">97,412.35</span><span class="chg">▲ +2.41%</span></div>
+        <div class="tabs"><button>5m</button><button>15m</button><button class="on">1h</button><button>1d</button></div>
+        <div class="info"></div>
+        <div class="chartbox"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen"><h2>2 · Alert lines</h2>
+    <div class="phone" id="p2">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="head"><b>BTC/USDT</b><span class="px">97,412.35</span><span class="chg">▲ +2.41%</span></div>
+        <div class="tabs"><button>5m</button><button>15m</button><button class="on">1h</button><button>1d</button></div>
+        <div class="info"></div>
+        <div class="chartbox"></div>
+        <div class="legend"><span><i style="color:var(--up)"></i>Above alert</span><span><i style="color:var(--down)"></i>Below alert</span><span>Hold the chart to add one</span></div>
+        <div class="newalert"><span>New alert <b></b></span><button data-cancel>Cancel</button><button>Create</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen"><h2>3 · Focus</h2>
+    <div class="phone" id="p3">
+      <div class="sb"><span>9:41</span><span>5G 87%</span></div>
+      <div class="content">
+        <div class="head"><b>BTC/USDT</b><span class="px">97,412.35</span><span class="chg">▲ +2.41%</span></div>
+        <div class="tabs"><button>5m</button><button>15m</button><button class="on">1h</button><button>1d</button></div>
+        <div class="mode"><button class="on" data-mode="line">Line</button><button data-mode="candle">Candles</button></div>
+        <div class="info"></div>
+        <div class="chartbox"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="notes">
+  <section>
+    <h3>1 · Refined: today's chart, easier to read</h3>
+    <ul>
+      <li><b>Last price line</b>: a dashed line at the current price with a tag on the axis, colored by the last candle.</li>
+      <li><b>Crosshair</b> on the selected candle: vertical and horizontal lines, with the close tagged on the price axis and the time on the time axis.</li>
+      <li><b>Volume colored</b> by candle direction, lighter.</li>
+      <li><b>Info line</b> in two rows: time and the candle's own change (%), then O H L C V aligned in columns.</li>
+      <li><b>Vico</b>: <code>HorizontalLine</code> decoration for the last price, a custom marker for the crosshair, a <code>ColumnProvider</code> per direction. Smallest change.</li>
+    </ul>
+  </section>
+  <section class="rec">
+    <h3>2 · Alert lines: the chart shows your alerts</h3>
+    <ul>
+      <li>Everything in option 1, plus each <b>Active alert</b> as a dashed line at its target, green for Above and red for Below, with the distance from the price.</li>
+      <li>An alert outside the visible range <b>pins to the edge</b> with an arrow, so the candles keep their scale.</li>
+      <li><b>Hold</b> on the chart to place a line and create an alert at that price; it opens the existing sheet with the target filled.</li>
+      <li><b>Vico</b>: one <code>HorizontalLine</code> per alert, a custom decoration for the pinned ones, a long-press handler on the host. Needs the Active alerts in <code>HomeUiState</code> (already read for the monitoring row).</li>
+      <li><b>Recommended</b>: it ties the chart to what the app is for, price alerts.</li>
+    </ul>
+  </section>
+  <section>
+    <h3>3 · Focus: a line by default, candles on demand</h3>
+    <ul>
+      <li>A <b>Line / Candles</b> switch, persisted like the timeframe. The line shows the closes with a soft area fill and a dot at the last price.</li>
+      <li><b>High and low</b> of the visible candles marked on the chart.</li>
+      <li>The selection shows a <b>floating card</b> next to the candle instead of the info line; the info line shows the visible range.</li>
+      <li>Volume shows only with candles.</li>
+      <li><b>Vico</b>: <code>LineCartesianLayer</code> with an area fill, swapped with the candle layer; a custom marker for the card. The switch is a new DataStore key.</li>
+    </ul>
+  </section>
+</div>
+
+<script src="shared.js"></script>
+<script>
+const TF = { '5m': { min: 5, seed: 23 }, '15m': { min: 15, seed: 37 }, '1h': { min: 60, seed: 11 }, '1d': { min: 1440, seed: 41 } };
+const END = new Date(2026, 10, 13, 18, 0);
+const N = 60, W = 332, H = 300, AX = 56, XH = 18;
+const cw = W - AX, plotH = H - XH;
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function when(i, tf, long) {
+  const d = new Date(END - (N - 1 - i) * TF[tf].min * 60000);
+  const md = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const hm = d.toTimeString().slice(0, 5);
+  if (tf === '1d') return md;
+  return long ? `${md}, ${hm}` : hm;
+}
+const pct = (a, b) => (b - a) / a * 100;
+const sgn = v => (v >= 0 ? '+' : '−') + Math.abs(v).toFixed(2) + '%';
+
+function render(s) {
+  const ks = candles(N, TF[s.tf].seed);
+  const line = s.kind === 3 && s.mode === 'line';
+  const showVol = !line;
+  const volFrac = showVol ? 0.2 : 0;
+  const top = 10, bot = plotH * (1 - volFrac) - 6;
+  let lo = Math.min(...ks.map(k => line ? k.c : k.l)), hi = Math.max(...ks.map(k => line ? k.c : k.h));
+  const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+  const y = p => top + (hi - p) / (hi - lo) * (bot - top);
+  const step = cw / N, bw = Math.max(2, step * 0.62), vmax = Math.max(...ks.map(k => k.v));
+  const xi = i => i * step + step / 2;
+  const last = ks[N - 1], lastUp = last.c >= last.o;
+  const up = cssVar('--up'), down = cssVar('--down');
+  let g = '';
+
+  // Grid and price axis.
+  const labels = [];
+  for (let i = 0; i < 4; i++) {
+    const p = lo + (hi - lo) * (i + 0.5) / 4, yy = y(p);
+    g += `<line class="grid" x1="0" x2="${cw}" y1="${yy}" y2="${yy}" ${s.kind > 1 ? 'opacity=".6"' : ''}/>`;
+    labels.push([p, yy]);
+  }
+  // Time axis: a label every 12 candles.
+  for (let i = 5; i < N; i += 12) g += `<text class="xlab" x="${xi(i)}" y="${H - 4}" text-anchor="middle">${when(i, s.tf)}</text>`;
+
+  // Volume.
+  if (showVol) ks.forEach((k, i) => {
+    const vh = k.v / vmax * plotH * volFrac * 0.9, colored = s.kind !== 3;
+    const fill = colored ? (k.c >= k.o ? up : down) : cssVar('--text');
+    g += `<rect x="${xi(i) - bw / 2}" y="${plotH - vh}" width="${bw}" height="${vh}" fill="${fill}" opacity="${colored ? .28 : .16}"/>`;
+  });
+
+  if (line) {
+    const pts = ks.map((k, i) => `${xi(i)},${y(k.c)}`).join(' ');
+    g += `<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cssVar('--accent')}" stop-opacity=".28"/><stop offset="1" stop-color="${cssVar('--accent')}" stop-opacity="0"/></linearGradient></defs>`;
+    g += `<polygon points="${xi(0)},${plotH} ${pts} ${xi(N - 1)},${plotH}" fill="url(#ag)"/>`;
+    g += `<polyline points="${pts}" fill="none" stroke="${cssVar('--accent')}" stroke-width="1.8" stroke-linejoin="round"/>`;
+    g += `<circle cx="${xi(N - 1)}" cy="${y(last.c)}" r="7" fill="${cssVar('--accent')}" opacity=".25"/><circle cx="${xi(N - 1)}" cy="${y(last.c)}" r="3.2" fill="${cssVar('--accent')}"/>`;
+  } else {
+    ks.forEach((k, i) => {
+      const c = k.c >= k.o ? up : down, x = xi(i);
+      const t = y(Math.max(k.o, k.c)), b = y(Math.min(k.o, k.c));
+      const dim = s.sel != null && s.kind === 3 && i !== s.sel ? ' opacity=".45"' : '';
+      g += `<line x1="${x}" x2="${x}" y1="${y(k.h)}" y2="${y(k.l)}" stroke="${c}"${dim}/>`;
+      g += `<rect x="${x - bw / 2}" y="${t}" width="${bw}" height="${Math.max(1, b - t)}" rx="1" fill="${c}"${dim}/>`;
+    });
+  }
+
+  // Option 3: high and low of the visible candles.
+  if (s.kind === 3) {
+    const hiI = ks.reduce((m, k, i) => (line ? k.c : k.h) > (line ? ks[m].c : ks[m].h) ? i : m, 0);
+    const loI = ks.reduce((m, k, i) => (line ? k.c : k.l) < (line ? ks[m].c : ks[m].l) ? i : m, 0);
+    const mark = (i, p, above) => {
+      const x = xi(i), yy = y(p), right = x < cw / 2, ty = above ? yy - 6 : yy + 13;
+      return `<g class="hl"><line x1="${x}" x2="${x + (right ? 14 : -14)}" y1="${yy}" y2="${yy}"/><text x="${x + (right ? 17 : -17)}" y="${yy + 3}" text-anchor="${right ? 'start' : 'end'}">${above ? 'H' : 'L'} ${fmt(p, 0)}</text></g>`;
+    };
+    g += mark(hiI, line ? ks[hiI].c : ks[hiI].h, true) + mark(loI, line ? ks[loI].c : ks[loI].l, false);
+  }
+
+  // Option 2: Active alerts, pinned to the edge when outside the range.
+  const tags = [];
+  if (s.kind === 2) {
+    const price = 97412.35;
+    const alerts = [{ p: 102000, dir: 'above' }, { p: Math.round((lo + (price - lo) * 0.62) / 50) * 50, dir: 'below' }, { p: Math.round((lo + (price - lo) * 0.25) / 50) * 50, dir: 'below' }];
+    alerts.forEach(a => {
+      const c = a.dir === 'above' ? up : down, off = a.p > hi ? 'top' : a.p < lo ? 'bottom' : null;
+      const yy = off === 'top' ? top + 2 : off === 'bottom' ? bot - 2 : y(a.p);
+      const label = `${a.dir === 'above' ? '▲' : '▼'} ${fmt(a.p, 0)}  ${sgn(pct(price, a.p))}${off ? (off === 'top' ? ' ↑' : ' ↓') : ''}`;
+      const lw = label.length * 5.9 + 12;
+      if (!off) g += `<line x1="0" x2="${cw}" y1="${yy}" y2="${yy}" stroke="${c}" stroke-width="1.2" stroke-dasharray="6 4"/>`;
+      g += `<g class="ltag"><rect x="4" y="${yy - 8}" width="${lw}" height="16" rx="8" fill="${c}" ${off ? 'opacity=".85"' : ''}/><text x="10" y="${yy + 3.5}">${label}</text></g>`;
+    });
+    if (s.pending != null) {
+      const yy = y(s.pending);
+      g += `<line class="pending" x1="0" x2="${cw}" y1="${yy}" y2="${yy}"/>`;
+      tags.push([yy, fmt(s.pending, 0), cssVar('--accent'), cssVar('--onaccent')]);
+    }
+  }
+
+  // Last price line (options 1 and 2).
+  if (s.kind !== 3) {
+    const ly = y(last.c), c = lastUp ? up : down;
+    g += `<line class="lastl" x1="0" x2="${cw}" y1="${ly}" y2="${ly}" stroke="${c}"/>`;
+    tags.push([ly, fmt(last.c, 0), c, '#fff']);
+  }
+
+  // Selection.
+  let tip = '';
+  if (s.sel != null) {
+    const k = ks[s.sel], x = xi(s.sel);
+    g += `<line class="cross" x1="${x}" x2="${x}" y1="0" y2="${plotH}"/>`;
+    if (s.kind !== 3) {
+      const yy = y(k.c);
+      g += `<line class="cross" x1="0" x2="${cw}" y1="${yy}" y2="${yy}"/>`;
+      tags.push([yy, fmt(k.c, 0), cssVar('--text'), cssVar('--bg')]);
+      const t = when(s.sel, s.tf, true), tw = t.length * 6 + 10;
+      g += `<g class="ptag"><rect x="${Math.min(cw - tw, Math.max(0, x - tw / 2))}" y="${plotH + 1}" width="${tw}" height="16" rx="4"/><text x="${Math.min(cw - tw / 2, Math.max(tw / 2, x))}" y="${plotH + 12}" text-anchor="middle">${t}</text></g>`;
+    } else {
+      // Floating card on the side away from the finger.
+      const cwid = 128, chgt = 92, left = x > cw / 2, cx = left ? x - cwid - 10 : x + 10, cy = 14;
+      const ch = pct(k.o, k.c), c = ch >= 0 ? up : down;
+      const row = (n, l, v) => `<text x="${cx + 8}" y="${cy + 30 + n * 12}">${l}</text><text class="v" x="${cx + cwid - 8}" y="${cy + 30 + n * 12}" text-anchor="end">${v}</text>`;
+      tip = `<g class="tip"><rect x="${cx}" y="${cy}" width="${cwid}" height="${chgt}" rx="8"/>
+        <text x="${cx + 8}" y="${cy + 14}">${when(s.sel, s.tf, true)}</text><text x="${cx + cwid - 8}" y="${cy + 14}" text-anchor="end" fill="${c}" style="fill:${c};font-weight:600">${sgn(ch)}</text>
+        ${row(0, 'Open', fmt(k.o))}${row(1, 'High', fmt(k.h))}${row(2, 'Low', fmt(k.l))}${row(3, 'Close', fmt(k.c))}${row(4, 'Vol', volume(k.v))}</g>`;
+      g += `<circle cx="${x}" cy="${y(k.c)}" r="3.5" fill="${cssVar('--text')}"/>`;
+    }
+  }
+
+  // Price axis labels, hidden where a tag sits.
+  labels.forEach(([p, yy]) => {
+    if (tags.every(([ty]) => Math.abs(ty - yy) > 14)) g += `<text class="axis" x="${W - 4}" y="${yy + 3}" text-anchor="end">${fmt(p, 0)}</text>`;
+  });
+  tags.forEach(([yy, t, bg, fg]) => {
+    g += `<g><rect x="${cw + 2}" y="${yy - 8}" width="${AX - 2}" height="16" rx="4" fill="${bg}"/><text x="${W - 4}" y="${yy + 3.5}" text-anchor="end" fill="${fg}" font-size="9.5" font-weight="650">${t}</text></g>`;
+  });
+
+  s.box.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${g}${tip}</svg>`;
+  s.y = y; s.lo = lo; s.hi = hi; s.step = step;
+
+  // Info line above the chart.
+  const k = ks[s.sel ?? N - 1], ch = pct(k.o, k.c), c = ch >= 0 ? 'var(--up)' : 'var(--down)';
+  if (s.kind === 3) {
+    const vis = line ? ks.map(q => q.c) : ks.flatMap(q => [q.h, q.l]);
+    s.info.innerHTML = `<div class="r1"><span>Last ${N} candles</span><span style="color:${pct(ks[0].o, last.c) >= 0 ? 'var(--up)' : 'var(--down)'}">${sgn(pct(ks[0].o, last.c))}</span></div>
+      <div class="old"><span>H <b>${fmt(Math.max(...vis))}</b></span><span>L <b>${fmt(Math.min(...vis))}</b></span><span>${s.sel == null ? 'Tap the chart for a candle' : ''}</span></div>`;
+  } else {
+    s.info.innerHTML = `<div class="r1"><b>${when(s.sel ?? N - 1, s.tf, true)}${s.sel == null ? ' · last' : ''}</b><span style="color:${c};font-weight:600">${sgn(ch)}</span></div>
+      <div class="grid4"><span>O <b>${fmt(k.o)}</b></span><span>H <b>${fmt(k.h)}</b></span><span>L <b>${fmt(k.l)}</b></span><span>C <b>${fmt(k.c)}</b></span><span>V <b>${volume(k.v)}</b></span></div>`;
+  }
+}
+
+function setup(id, kind) {
+  const el = document.getElementById(id);
+  const s = { kind, tf: '1h', sel: null, mode: 'line', pending: null, box: el.querySelector('.chartbox'), info: el.querySelector('.info') };
+  el.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    s.tf = b.textContent; s.sel = null; s.pending = null; hideNew(); render(s);
+  });
+  el.querySelectorAll('.mode button').forEach(b => b.onclick = () => {
+    el.querySelectorAll('.mode button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    s.mode = b.dataset.mode; render(s);
+  });
+  const na = el.querySelector('.newalert');
+  const hideNew = () => na && na.classList.remove('show');
+  if (na) na.querySelector('[data-cancel]').onclick = () => { s.pending = null; hideNew(); render(s); };
+  let timer = null, held = false;
+  const point = e => {
+    const r = s.box.querySelector('svg').getBoundingClientRect();
+    return [(e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height];
+  };
+  s.box.onpointerdown = e => {
+    held = false;
+    if (kind !== 2) return;
+    const [, py] = point(e);
+    timer = setTimeout(() => {
+      held = true;
+      const p = s.hi - (py - 10) / (s.y(s.lo) - 10) * (s.hi - s.lo);
+      s.pending = Math.round(p / 10) * 10;
+      const dir = s.pending > 97412.35 ? 'Above' : 'Below';
+      na.querySelector('b').textContent = `${dir} ${fmt(s.pending, 0)} (${sgn(pct(97412.35, s.pending))})`;
+      na.classList.add('show');
+      render(s);
+    }, 450);
+  };
+  s.box.onpointerup = e => {
+    clearTimeout(timer);
+    if (held) return;
+    const [px, py] = point(e);
+    if (px > cw || py > plotH) return;
+    const i = Math.max(0, Math.min(N - 1, Math.floor(px / s.step)));
+    s.sel = s.sel === i ? null : i;
+    render(s);
+  };
+  s.box.onpointerleave = () => clearTimeout(timer);
+  render(s);
+  return s;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const all = [setup('p1', 1), setup('p2', 2), setup('p3', 3)];
+  // Colors are read from CSS variables: redraw after a theme switch.
+  document.querySelector('[data-theme-toggle]').addEventListener('click', () => setTimeout(() => all.forEach(render), 0));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => all.forEach(render));
+});
+</script>
+</body>
+</html>

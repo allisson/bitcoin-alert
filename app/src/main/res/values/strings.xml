@@ -14,7 +14,7 @@
     <string name="stale_short">Stale</string>
     <string name="candles_error">Couldn\'t load candles</string>
     <string name="retry">Retry</string>
-    <string name="candle_ohlc">%1$s  O %2$s  H %3$s  L %4$s  C %5$s  V %6$s</string>
+    <string name="candle_ohlc">O %1$s  H %2$s  L %3$s  C %4$s  V %5$s</string>
     <plurals name="active_alerts">
         <item quantity="one">%d active alert</item>
         <item quantity="other">%d active alerts</item>

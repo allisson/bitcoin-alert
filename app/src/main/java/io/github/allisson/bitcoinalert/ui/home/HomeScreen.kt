@@ -52,11 +52,13 @@ import io.github.allisson.bitcoinalert.R
 import io.github.allisson.bitcoinalert.data.repository.CandleState
 import io.github.allisson.bitcoinalert.domain.model.ConnectionState
 import io.github.allisson.bitcoinalert.domain.model.MonitoringState
+import io.github.allisson.bitcoinalert.domain.model.PriceAlert
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.ui.charts.CandleChart
 import io.github.allisson.bitcoinalert.ui.rememberNotificationPermissionRequest
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
 import io.github.allisson.bitcoinalert.ui.theme.MonoFamily
+import java.math.BigDecimal
 import java.util.Locale
 
 @Composable
@@ -69,6 +71,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val monitoring by viewModel.monitoring.collectAsStateWithLifecycle()
+    val activeAlerts by viewModel.activeAlerts.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
     val requestNotifications = rememberNotificationPermissionRequest()
     val context = LocalContext.current
@@ -91,7 +94,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
             device?.let { checks -> Warnings(homeWarnings(it, checks)) }
         }
         TimeframeTabs(state.timeframe, viewModel::selectTimeframe)
-        CandlesArea(state.candles, locale, viewModel::retryCandles)
+        CandlesArea(state.candles, activeAlerts, state.ticker?.lastPrice, locale, viewModel::retryCandles)
     }
 }
 
@@ -278,7 +281,13 @@ private fun TimeframeTabs(selected: Timeframe?, onSelect: (Timeframe) -> Unit) {
 }
 
 @Composable
-private fun CandlesArea(candles: CandleState, locale: Locale, onRetry: () -> Unit) {
+private fun CandlesArea(
+    candles: CandleState,
+    alerts: List<PriceAlert>,
+    price: BigDecimal?,
+    locale: Locale,
+    onRetry: () -> Unit,
+) {
     Box(
         modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
         contentAlignment = Alignment.Center,
@@ -294,7 +303,7 @@ private fun CandlesArea(candles: CandleState, locale: Locale, onRetry: () -> Uni
             }
             // Every load passes through Loading, so each load gets a new chart that opens at the last candle.
             is CandleState.Loaded -> if (candles.candles.isNotEmpty()) {
-                CandleChart(candles.timeframe, candles.candles, locale)
+                CandleChart(candles.timeframe, candles.candles, alerts, price, locale)
             }
         }
     }
