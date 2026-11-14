@@ -289,7 +289,7 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 - [x] Implement service cleanup.
 - [x] Make `onStartCommand` idempotent: a repeated start must not open a second connection or evaluation loop (Android already keeps a single service instance).
 - [x] Wire the real monitoring state into the stream set derivation (Phase 1).
-- [ ] Ensure database operations are safe during service execution.
+- [x] Ensure database operations are safe during service execution: a `SQLiteException` stops the service (Interrupted) instead of crashing the process (`spec.md` §2.8), with a Robolectric test. The Alerts screen actions are reviewed in Phase 5 (Review error handling).
 
 ### Notification implementation
 

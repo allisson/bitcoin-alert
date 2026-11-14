@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Looper
 import io.github.allisson.bitcoinalert.TestApp
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection.ABOVE
+import io.github.allisson.bitcoinalert.domain.model.AlertState
 import io.github.allisson.bitcoinalert.notifications.ALERTS_CHANNEL_ID
 import io.github.allisson.bitcoinalert.notifications.ALERT_NOTIFICATION_ID
 import io.github.allisson.bitcoinalert.notifications.MONITORING_NOTIFICATION_ID
@@ -95,6 +96,23 @@ class PriceMonitorServiceTest {
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(emptyList<Notification>(), alertNotifications())
         assertEquals(0, runBlocking { app.alertRepository.history.first() }.size)
+    }
+
+    @Test
+    fun `a database failure in the trigger stops the service instead of crashing`() {
+        val id = runBlocking { app.alertRepository.create(ABOVE, BigDecimal("100.00")).id }
+        // A real SQLiteException from inside the trigger transaction, as a full disk would raise.
+        app.database.openHelper.writableDatabase.execSQL(
+            "CREATE TRIGGER fail BEFORE INSERT ON alert_history BEGIN SELECT RAISE(ABORT, 'disk full'); END",
+        )
+        val service = startEvaluating()
+        price("99.00")
+        price("101.00")
+        waitUntil { shadowOf(service).isStoppedBySelf }
+        assertEquals(emptyList<Notification>(), alertNotifications())
+        assertTrue(runBlocking { app.settingsRepository.monitoringRequested.first() })
+        // The transaction rolled back: the alert is still Active.
+        assertEquals(AlertState.Active, runBlocking { app.alertRepository.alerts.first() }.single { it.id == id }.state)
     }
 
     @Test

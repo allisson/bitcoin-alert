@@ -353,6 +353,7 @@ Order of writes, so the UI never shows Interrupted during a normal start or stop
 - Every `onStartCommand` calls `ServiceCompat.startForeground` first, before any suspending work such as a DataStore read: a service started with `startForegroundService` must do it within a few seconds or Android throws `ForegroundServiceDidNotStartInTimeException`, and a restarted service is no longer in the foreground, so without it Android stops the service under the background execution limits. On a restart that call is the one that can throw `ForegroundServiceStartNotAllowedException` (handled as above).
 - On a restart (`onStartCommand` with a `null` intent), after `startForeground` the service reads `monitoringRequested` and calls `stopSelf()` if it is `false`: the process may have died after the user stopped monitoring but before the service stopped. The monitoring notification then shows for an instant, which is harmless.
 - Monitoring is not restarted automatically after a device reboot (no `BOOT_COMPLETED` receiver). After a reboot the flag is still `true`, so the application shows Interrupted until the user starts or stops monitoring.
+- A database failure in the service (`SQLiteException` from the trigger transaction or from reading the alerts, e.g. a full disk) stops the service with `stopSelf()` and is logged; it does not crash the process. `monitoringRequested` stays `true`, so the state becomes Interrupted and Home shows the monitoring warning; Start tries again. Such failures are usually persistent, so the crossing being triggered is not retried, and the transaction rollback leaves the alert Active.
 
 #### Foreground Service type
 
@@ -798,6 +799,7 @@ JVM tests (§3.1): Robolectric for Room and notifications, `MockWebServer` for R
 - Notification generation.
 - Service restart with `monitoringRequested = true`: `onStartCommand(null, …)` calls `startForeground`.
 - Service restart with `monitoringRequested = false`: `onStartCommand(null, …)` calls `startForeground`, then `stopSelf()`. On a device this needs the process to die between the flag write and the service stop, so it is tested here: build the service with `Robolectric.buildService(...).create()` and call `onStartCommand(null, 0, 1)` on it directly.
+- Database failure in the service: a trigger transaction that throws `SQLiteException` stops the service (no crash), posts no notification, keeps `monitoringRequested = true` and leaves the alert Active.
 
 ### Device tests
 
