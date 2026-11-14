@@ -143,7 +143,7 @@
 - [x] Apply the dark and light themes, following the system setting; validate both, including chart and price-change colors.
 - [x] Call `enableEdgeToEdge()` and apply system bar insets on Home, Alerts and History (mandatory with `targetSdk` 35+; `spec.md` §4).
 - [x] Validate layouts on different screen sizes and at the largest system font size.
-- [ ] Give icon-only buttons a `contentDescription` (`spec.md` §4). The navigation bar icons have text labels and are decorative, so this applies from the first icon-only button.
+- [x] Give icon-only buttons a `contentDescription` (`spec.md` §4). The navigation bar icons have text labels and are decorative; the first icon-only button is the alert menu (Phase 3).
 - [x] Apply the visual design (`spec.md` §4 Visual design): fixed palette, JetBrains Mono for numbers, bottom navigation, connection and stale pills, timeframe tabs; validate both themes and font scale 2.0.
 
 ### Candlestick chart
@@ -210,17 +210,18 @@
 
 ### Alert interface
 
-- [ ] Implement the alerts screen.
-- [ ] Implement alert creation form.
-- [ ] Implement target price validation (> 0, at most 2 decimal places counted as typed, so `1.000` and `100,000` are rejected; normalized to scale 2 before saving; one decimal separator `.` or `,` with a digit on each side, no grouping separators, surrounding whitespace trimmed; `spec.md` §2.5), with unit tests.
-- [ ] Show the parsed target formatted with the device locale before saving.
-- [ ] Implement ABOVE/BELOW direction selection.
-- [ ] Implement alert activation and deactivation.
-- [ ] Implement alert deletion, as an action in the alert's menu (no swipe; `spec.md` §4 Visual design).
-- [ ] Implement alert reactivation.
-- [ ] Show the distance from the current price to the target (percentage and bar) on each Active alert (`spec.md` §4 Visual design).
-- [ ] Show the number of Active alerts as a badge on the Alerts navigation item.
-- [ ] Display active, triggered and disabled alert states, each list ordered `createdAt DESC, id DESC` (never `ORDER BY targetPrice`: it is a string; `spec.md` §4), with database tests.
+- [x] Implement the alerts screen.
+- [x] Subscribe the ticker while Alerts is visible, for the distance to each target (`spec.md` §3.3), with unit tests.
+- [x] Implement alert creation form.
+- [x] Implement target price validation (> 0, at most 2 decimal places counted as typed, so `1.000` and `100,000` are rejected; normalized to scale 2 before saving; one decimal separator `.` or `,` with a digit on each side, no grouping separators, surrounding whitespace trimmed; `spec.md` §2.5), with unit tests.
+- [x] Show the parsed target formatted with the device locale before saving.
+- [x] Implement ABOVE/BELOW direction selection.
+- [x] Implement alert activation and deactivation.
+- [x] Implement alert deletion, as an action in the alert's menu (no swipe; `spec.md` §4 Visual design).
+- [x] Implement alert reactivation.
+- [x] Show the distance from the current price to the target (percentage and bar) on each Active alert (`spec.md` §4 Visual design).
+- [x] Show the number of Active alerts as a badge on the Alerts navigation item.
+- [x] Display active, triggered and disabled alert states: Active and Disabled ordered `createdAt DESC, id DESC`, Triggered `triggeredAt DESC, id DESC` (never `ORDER BY targetPrice`: it is a string; `spec.md` §4), with database and unit tests.
 
 ### History interface
 
