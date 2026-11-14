@@ -1,5 +1,6 @@
 package io.github.allisson.bitcoinalert.ui.home
 
+import io.github.allisson.bitcoinalert.domain.model.Ticker
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
@@ -7,6 +8,10 @@ import java.util.Locale
 
 /** A scale-2 price with the locale's grouping and exactly 2 decimal places. */
 fun formatPrice(price: BigDecimal, locale: Locale): String = twoDecimals(locale).format(price)
+
+/** The last price, or [placeholder] before the first ticker (spec.md §2.1). */
+fun priceText(ticker: Ticker?, locale: Locale, placeholder: String): String =
+    ticker?.let { formatPrice(it.lastPrice, locale) } ?: placeholder
 
 /** A scale-2 percentage with the locale's decimal separator, no grouping; [signed] adds `+` to positive values. */
 fun formatPercent(percent: BigDecimal, locale: Locale, signed: Boolean = false): String {

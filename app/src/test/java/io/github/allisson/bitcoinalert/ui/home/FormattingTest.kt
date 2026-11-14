@@ -1,5 +1,6 @@
 package io.github.allisson.bitcoinalert.ui.home
 
+import io.github.allisson.bitcoinalert.domain.model.Ticker
 import java.math.BigDecimal
 import java.util.Locale
 import org.junit.Assert.assertEquals
@@ -14,6 +15,12 @@ class FormattingTest {
         assertEquals("104,250.50", formatPrice(BigDecimal("104250.50"), EN_US))
         assertEquals("104.250,50", formatPrice(BigDecimal("104250.50"), PT_BR))
         assertEquals("0.01", formatPrice(BigDecimal("0.01"), EN_US))
+    }
+
+    @Test
+    fun `price shows the placeholder before the first ticker`() {
+        assertEquals("—", priceText(null, EN_US, "—"))
+        assertEquals("104.250,50", priceText(Ticker(BigDecimal("104250.50"), BigDecimal.ZERO, 0), PT_BR, "—"))
     }
 
     @Test

@@ -111,7 +111,7 @@ private fun PriceSection(state: HomeUiState, locale: Locale) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                state.ticker?.let { formatPrice(it.lastPrice, locale) } ?: placeholder,
+                priceText(state.ticker, locale, placeholder),
                 modifier = Modifier.alignByBaseline(),
                 style = MaterialTheme.typography.displaySmall,
                 fontFamily = MonoFamily,
