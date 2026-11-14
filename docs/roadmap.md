@@ -259,11 +259,11 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 - [x] Review current Android Foreground Service requirements: recorded in `spec.md` §2.8 (`specialUse` from API 34, `ServiceCompat.startForeground` below API 29, the `startForeground` deadline, `dataSync` limited to 6 hours per day on Android 15).
 - [x] Declare the `specialUse` Foreground Service type with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; start it with `ServiceCompat.startForeground`.
 - [x] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below). `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is declared (4c); `VIBRATE` is not declared and waits for the device check below.
-- [ ] Check whether alert vibration works without `VIBRATE`; if it does, remove its row in `spec.md` §5, otherwise declare it (run in Phase 5 Device testing).
+- [x] Check whether alert vibration works without `VIBRATE`; if it does, remove its row in `spec.md` §5, otherwise declare it. It works on the device: the row is removed and the permission stays undeclared.
 - [x] Set `android:allowBackup="false"` and `android:dataExtractionRules` excluding all data from cloud backup and device transfer (`spec.md` §5).
 - [x] Review required manifest declarations: the service (`exported="false"`, `specialUse` with its subtype property), the permissions, `allowBackup`, `dataExtractionRules` and `networkSecurityConfig` match `spec.md` §2.8 and §5.
 - [x] Review runtime permission requirements: `POST_NOTIFICATIONS` (API 33+) is the only runtime permission, requested on monitoring start and alert creation; below API 33 the Home warning relies on `areNotificationsEnabled()`. The others are normal permissions; the battery exemption is a system dialog.
-- [ ] Validate behavior on the `minSdk` and `targetSdk` versions. The service Robolectric tests run on API 26 and 37; the device check is in Phase 5 Device testing (different Android versions).
+- [x] Validate behavior on the `minSdk` and `targetSdk` versions. The service Robolectric tests run on API 26 and 37; checked on an API 26 emulator, an API 37 emulator and an API 36 device. Results in `spec.md` §7 (Device test results).
 - [ ] Document manufacturer-specific battery restrictions.
 - [x] Validate service startup restrictions: monitoring starts only from a user action in the foreground (a refused start is caught on Home); the only background start is the `START_STICKY` restart, whose refusal ends as Interrupted, with Robolectric tests.
 
@@ -304,7 +304,7 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 - [x] Configure vibration.
 - [x] Request notification permission, while not granted, on every monitoring start and alert creation, without blocking the action on the dialog result (`spec.md` §2.6).
 - [x] Warn on the main screen when Active alerts exist and notifications are disabled: permission denied, app notifications off (`areNotificationsEnabled()`) or Price alerts channel blocked; the warning opens the matching system settings and is re-evaluated on Home `ON_RESUME` (`spec.md` §2.1), with unit tests (`spec.md` §7).
-- [ ] Verify behavior when the user dismisses the monitoring notification (Android 14+).
+- [x] Verify behavior when the user dismisses the monitoring notification (Android 14+): the service keeps running. Results in `spec.md` §7 (Device test results).
 
 ### Lifecycle and recovery
 
@@ -313,9 +313,9 @@ The physical device checks of this phase (vibration without `VIBRATE`, screen-of
 - [x] Handle WebSocket failure: a failure or a failed subscription response is a lost connection (Phase 1).
 - [x] Handle service interruption: `START_STICKY` restart, refused restart and a database failure end as Interrupted, with Robolectric tests.
 - [x] Handle application process termination: the in-memory running flag resets, so the state is Interrupted; the restart checks `monitoringRequested`, with Robolectric tests. The device check is in Phase 5 Device testing.
-- [ ] Verify monitoring is not restarted after device reboot and the UI shows it as Interrupted (Phase 5 Device testing).
+- [x] Verify monitoring is not restarted after device reboot and the UI shows it as Interrupted. Results in `spec.md` §7 (Device test results).
 - [x] Ensure users are informed when monitoring is inactive.
-- [ ] Validate behavior when the application is swiped away (Phase 5 Device testing).
+- [x] Validate behavior when the application is swiped away: the service keeps running. Results in `spec.md` §7 (Device test results).
 
 ### Battery validation
 
@@ -363,21 +363,21 @@ Unit tests are written with each feature, in the phase that implements it.
 
 These include the Phase 4 device checks; record the results in `spec.md` and close the matching Phase 4 tasks.
 
-- [ ] Test on a physical Android device.
-- [ ] Test on different Android versions.
-- [ ] Test alert vibration without the `VIBRATE` permission, with the device in vibrate mode.
+- [x] Test on a physical Android device: Samsung Galaxy A54, Android 16 (API 36), One UI 8.5. Results in `spec.md` §7 (Device test results).
+- [x] Test on different Android versions: API 36 on the device, API 26 and API 37 on emulators.
+- [x] Test alert vibration without the `VIBRATE` permission, with the device in vibrate mode.
 - [ ] Test screen-off monitoring, unplugged, for 60 minutes, without and then with the battery optimization exemption; measure the alert delay against the `1m` candle that crossed the target.
 - [ ] Document the manufacturer battery restrictions found (default app battery setting, sleeping apps) and what the exemption changes.
-- [ ] Test swiping the app away from Recents while monitoring runs.
-- [ ] Test dismissing the monitoring notification (Android 14+).
+- [x] Test swiping the app away from Recents while monitoring runs.
+- [x] Test dismissing the monitoring notification (Android 14+).
 - [ ] Measure battery consumption overnight, with monitoring stopped and with monitoring running.
-- [ ] Test Wi-Fi disconnection.
-- [ ] Test mobile data transitions.
-- [ ] Test airplane mode transitions.
-- [ ] Test notification permission denial, app notifications off and Price alerts channel blocked.
-- [ ] Test application process termination.
-- [ ] Test stopping the app from the Task Manager (Android 13+); record whether `START_STICKY` restarts it.
-- [ ] Test device reboot behavior.
+- [x] Test Wi-Fi disconnection.
+- [x] Test mobile data transitions.
+- [x] Test airplane mode transitions.
+- [x] Test notification permission denial, app notifications off and Price alerts channel blocked.
+- [x] Test application process termination: `START_STICKY` did not restart the service within 6 minutes; Home shows Interrupted.
+- [x] Test stopping the app from the Task Manager (Android 13+); record whether `START_STICKY` restarts it: it does not.
+- [x] Test device reboot behavior.
 - [ ] Test long-running monitoring sessions.
 
 ### Application quality
@@ -388,8 +388,6 @@ These include the Phase 4 device checks; record the results in `spec.md` and clo
 - [x] Review network security configuration. `cleartextTrafficPermitted="false"` in the base config, no `usesCleartextTraffic`.
 - [x] Remove unused dependencies. Removed `ui-tooling` and `ui-tooling-preview` (no `@Preview` in the code).
 - [x] Remove debug-only code from Release builds. None: `app/src/debug` holds only the debug app name.
-- [ ] Validate application startup performance (on the device, with Device testing).
-- [ ] Validate chart rendering performance (on the device, with Device testing).
 - [x] Verify no unnecessary personal data is collected. No accounts, analytics or backend; the only network traffic is the Binance public market data.
 - [x] Verify alert data is not included in Android backups or device-to-device transfer (`allowBackup="false"`, `dataExtractionRules`). Both set; the rules exclude every domain from cloud backup and device transfer. The on-device check is in `spec.md` §8 (Phase 7).
 
@@ -403,7 +401,8 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 - [x] Show the selected candle's own change next to its time, above the OHLC line.
 - [x] Draw each Active alert as a line labeled with its target and distance from the price; pin alerts outside the candles' range to the edge.
 - [x] Create an alert by long-pressing the chart: the New alert sheet opens with the touched price and the matching direction. Checked on the API 37 emulator: `Above 73452` over the price, `Below 66642` under it, and the created alert's line drawn.
-- [ ] Check the overlays on the device, in light and dark themes.
+- [x] Check the overlays on the device, in light and dark themes. Results in `spec.md` §7 (Device test results).
+- [ ] Fit the price axis to the visible candles. The axis covers every loaded candle (`CartesianLayerRangeProvider.Intrinsic`), so after a large move the visible candles are squeezed into a small band of the chart (seen on the device: 15m candles in the bottom quarter).
 - [x] Keep alert labels from overlapping: a target near the bottom is labeled under a Below alert pinned to that edge. Labels stack in price order; checked on the API 37 emulator with `70,000`/`69,800` and two alerts pinned to the bottom.
 
 **Acceptance criteria:**
@@ -453,6 +452,8 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 - [ ] Attach APK to the release.
 - [ ] Attach checksum to the release.
 - [ ] Validate the complete release workflow with `v0.x.y` tags only: every tag consumes a `versionCode`, so never use a `v1.x` tag for testing.
+- [ ] Validate application startup performance on the device with the Release APK (a debug build is `debuggable`; it took 2.3 to 2.6 s for a cold start on the Galaxy A54).
+- [ ] Validate chart rendering performance on the device with the Release APK.
 
 ### Documentation
 
