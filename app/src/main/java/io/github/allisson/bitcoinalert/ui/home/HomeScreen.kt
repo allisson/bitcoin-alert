@@ -26,8 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,8 @@ import io.github.allisson.bitcoinalert.domain.model.ConnectionState
 import io.github.allisson.bitcoinalert.domain.model.MonitoringState
 import io.github.allisson.bitcoinalert.domain.model.PriceAlert
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
+import io.github.allisson.bitcoinalert.ui.alerts.NewAlertSheet
+import io.github.allisson.bitcoinalert.ui.charts.AlertDraft
 import io.github.allisson.bitcoinalert.ui.charts.CandleChart
 import io.github.allisson.bitcoinalert.ui.rememberNotificationPermissionRequest
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
@@ -80,6 +84,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
         device = deviceChecks(context)
         onPauseOrDispose {}
     }
+    var draft by rememberSaveable { mutableStateOf<AlertDraft?>(null) }
 
     Column(
         modifier = Modifier
@@ -94,7 +99,18 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
             device?.let { checks -> Warnings(homeWarnings(it, checks)) }
         }
         TimeframeTabs(state.timeframe, viewModel::selectTimeframe)
-        CandlesArea(state.candles, activeAlerts, state.ticker?.lastPrice, locale, viewModel::retryCandles)
+        CandlesArea(state.candles, activeAlerts, state.ticker?.lastPrice, locale, viewModel::retryCandles) { draft = it }
+    }
+
+    draft?.let { (direction, target) ->
+        // Keyed by the draft, so a new long press starts the form from its own values.
+        key(direction, target) {
+            NewAlertSheet(state.ticker?.lastPrice, locale, onDismiss = { draft = null }, initialDirection = direction, initialTarget = target) { d, t ->
+                requestNotifications()
+                viewModel.createAlert(d, t)
+                draft = null
+            }
+        }
     }
 }
 
@@ -287,6 +303,7 @@ private fun CandlesArea(
     price: BigDecimal?,
     locale: Locale,
     onRetry: () -> Unit,
+    onLongPress: (AlertDraft) -> Unit,
 ) {
     Box(
         modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
@@ -303,7 +320,7 @@ private fun CandlesArea(
             }
             // Every load passes through Loading, so each load gets a new chart that opens at the last candle.
             is CandleState.Loaded -> if (candles.candles.isNotEmpty()) {
-                CandleChart(candles.timeframe, candles.candles, alerts, price, locale)
+                CandleChart(candles.timeframe, candles.candles, alerts, price, locale, onLongPress)
             }
         }
     }

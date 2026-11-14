@@ -14,10 +14,13 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,6 +52,7 @@ import com.patrykandpatrick.vico.compose.cartesian.marker.CandlestickCartesianLa
 import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarker
 import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerController
 import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener
+import com.patrykandpatrick.vico.compose.cartesian.marker.Interaction
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoScrollState
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
@@ -87,6 +91,7 @@ private val RisingKey = ExtraStore.Key<Set<Double>>()
  * Candles on the start axis and volume bars on the end axis of one chart, so they share scroll
  * and zoom (spec.md §2.3), with the last price line and a line per Active alert. Tapping a candle
  * selects it; the lines above show the selected candle, or the last one when none is selected.
+ * A long press on the price area passes the alert for that price to [onLongPress].
  * [candles] must not be empty; [price] is the current ticker price, for the alerts' distance.
  */
 @Composable
@@ -96,6 +101,7 @@ fun CandleChart(
     alerts: List<PriceAlert>,
     price: BigDecimal?,
     locale: Locale,
+    onLongPress: (AlertDraft) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val producer = remember { CartesianChartModelProducer() }
@@ -212,6 +218,19 @@ fun CandleChart(
                     formatTime = { x -> formatCandleTime(x.toLong(), timeframe, zone, locale) },
                 )
             }
+            val haptics = LocalHapticFeedback.current
+            // Before the first ticker, the last close stands in for the current price.
+            val reference by rememberUpdatedState(price ?: candles.last().close)
+            val onDraft by rememberUpdatedState(onLongPress)
+            val tapToggle = CartesianMarkerController.rememberToggleOnTap()
+            val markerController = remember(tapToggle, priceLines) {
+                TapOrLongPress(tapToggle) { y ->
+                    priceLines.draftAt(y, reference)?.let {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onDraft(it)
+                    }
+                }
+            }
             val chart = rememberCartesianChart(
                 rememberCandlestickCartesianLayer(
                     candleProvider = CandlestickCartesianLayer.CandleProvider.absolute(
@@ -244,7 +263,7 @@ fun CandleChart(
                 marker = marker,
                 markerVisibilityListener = markerListener,
                 decorations = listOf(priceLines),
-                markerController = CartesianMarkerController.rememberToggleOnTap(),
+                markerController = markerController,
             )
             CartesianChartHost(
                 chart,
@@ -321,9 +340,22 @@ private class PriceLines(
     var alerts by mutableStateOf<List<PriceAlert>>(emptyList())
     var price by mutableStateOf<BigDecimal?>(null)
 
+    // The price axis as last drawn, to turn a long press into a price; not state, so no redraw.
+    private var top = 0f
+    private var bottom = 0f
+    private var minY = 0.0
+    private var maxY = 0.0
+
+    /** `null` before the first draw and outside the price area. */
+    fun draftAt(y: Float, price: BigDecimal) = alertDraftAt(y, top, bottom, minY, maxY, price)
+
     override fun drawOverLayers(context: CartesianDrawingContext) {
         val bounds = context.layerBounds
         val range = context.ranges.getYRange(Axis.Position.Vertical.Start)
+        top = bounds.top
+        bottom = bounds.bottom
+        minY = range.minY
+        maxY = range.maxY
         alerts.forEach { alert ->
             val above = alert.direction == AlertDirection.ABOVE
             val target = alert.targetPrice.toDouble()
@@ -346,6 +378,22 @@ private class PriceLines(
         val tag = if (rising) upTag else downTag
         val label = formatAxisPrice(candle.close.toDouble(), locale)
         tag.draw(context, label, bounds.right - tag.getWidth(context, label) / 2, y, Position.Horizontal.Center, Position.Vertical.Center)
+    }
+}
+
+/** Vico's toggle-on-tap marker, plus a long press that reports its canvas y and leaves the marker as it is. */
+private class TapOrLongPress(
+    private val tap: CartesianMarkerController,
+    private val onLongPress: (Float) -> Unit,
+) : CartesianMarkerController by tap {
+    override val acceptsLongPress = true
+
+    override fun shouldAcceptInteraction(interaction: Interaction, targets: List<CartesianMarker.Target>): Boolean {
+        if (interaction is Interaction.LongPress) {
+            onLongPress(interaction.point.y)
+            return false
+        }
+        return tap.shouldAcceptInteraction(interaction, targets)
     }
 }
 

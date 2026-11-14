@@ -9,34 +9,23 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,10 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -260,73 +246,6 @@ private fun AlertMenu(onDelete: () -> Unit) {
                 open = false
                 onDelete()
             })
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NewAlertSheet(
-    price: BigDecimal?,
-    locale: Locale,
-    onDismiss: () -> Unit,
-    onCreate: (AlertDirection, BigDecimal) -> Unit,
-) {
-    var direction by rememberSaveable { mutableStateOf(AlertDirection.ABOVE) }
-    var text by rememberSaveable { mutableStateOf("") }
-    val target = parseTargetPrice(text)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
-        Column(
-            Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp).navigationBarsPadding().imePadding(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(stringResource(R.string.new_alert), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                AlertDirection.entries.forEachIndexed { index, option ->
-                    SegmentedButton(
-                        selected = direction == option,
-                        onClick = { direction = option },
-                        shape = SegmentedButtonDefaults.itemShape(index, AlertDirection.entries.size),
-                        icon = {
-                            val up = option == AlertDirection.ABOVE
-                            Icon(painterResource(if (up) R.drawable.ic_arrow_up else R.drawable.ic_arrow_down), null, Modifier.size(18.dp))
-                        },
-                    ) { Text(stringResource(if (option == AlertDirection.ABOVE) R.string.above else R.string.below)) }
-                }
-            }
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.target_price)) },
-                suffix = { Text(stringResource(R.string.usdt)) },
-                singleLine = true,
-                textStyle = TextStyle(fontFamily = MonoFamily),
-                isError = text.isNotBlank() && target == null,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                supportingText = {
-                    when {
-                        target != null -> {
-                            val saves = formatPrice(target, locale)
-                            Text(
-                                price?.let { stringResource(R.string.saves_as_from_now, saves, formatPercent(percentFromPrice(target, it), locale, signed = true)) }
-                                    ?: stringResource(R.string.saves_as, saves),
-                            )
-                        }
-                        text.isNotBlank() -> Text(stringResource(R.string.target_invalid))
-                    }
-                },
-            )
-            if (target != null && price != null && distance(direction, target, price) == Distance.Beyond) {
-                Text(
-                    stringResource(if (direction == AlertDirection.ABOVE) R.string.already_above else R.string.already_below),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
-            }
-            Button(onClick = { target?.let { onCreate(direction, it) } }, enabled = target != null, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.create_alert))
-            }
         }
     }
 }
