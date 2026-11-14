@@ -845,6 +845,7 @@ Samsung Galaxy A54 (SM-A546E), Android 16 (API 36), One UI 8.5, debug APK, Novem
 | API 26 (emulator, Android 8.0) | Launch, live price and chart, the battery optimization warning, monitoring start, and an Above alert that triggered and posted its notification. |
 | Release APK `v0.1.0`, cold start (`am start -W -S`, `TotalTime`) | 296 to 364 ms over 5 starts. The debug APK took 1185 to 1227 ms measured the same way. |
 | Release APK `v0.1.0`, chart scrolling (`dumpsys gfxinfo`, 10 swipes, 60 Hz display) | 232 frames, 11.64% janky; frame time 19 ms at the 50th percentile, 30 ms at the 90th, 44 ms at the 99th. |
+| Chart scrolling, refit on and off (Release build signed with the debug key, `dumpsys gfxinfo`, 3 rounds of 20 scripted `input swipe` on 1h, 60 Hz display) | Refit on, as shipped: 924 to 1015 frames per round, 5.32% to 6.49% janky; 15 ms at the 50th percentile, 22 to 23 ms at the 90th, 32 to 38 ms at the 99th. Refit off (fit only to the first visible window): 2.92% to 3.53% janky; 13 to 14 ms at the 50th, 17 to 19 ms at the 90th, 28 to 30 ms at the 99th. The refit adds about 2.5 points of janky frames; the rest comes from Vico. |
 | Release APK update, `v0.1.0` → `v0.1.1` (`adb install -r`) | Installed as an update: `versionCode` 100 → 101, `firstInstallTime` kept. Both APKs carry the same signing certificate. |
 
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
