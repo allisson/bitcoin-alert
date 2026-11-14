@@ -404,7 +404,7 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 - [x] Draw each Active alert as a line labeled with its target and distance from the price; pin alerts outside the candles' range to the edge.
 - [x] Create an alert by long-pressing the chart: the New alert sheet opens with the touched price and the matching direction. Checked on the API 37 emulator: `Above 73452` over the price, `Below 66642` under it, and the created alert's line drawn.
 - [ ] Check the overlays on the device, in light and dark themes.
-- [ ] Keep alert labels from overlapping: a target near the bottom is labeled under a Below alert pinned to that edge.
+- [x] Keep alert labels from overlapping: a target near the bottom is labeled under a Below alert pinned to that edge. Labels stack in price order; checked on the API 37 emulator with `70,000`/`69,800` and two alerts pinned to the bottom.
 
 **Acceptance criteria:**
 
