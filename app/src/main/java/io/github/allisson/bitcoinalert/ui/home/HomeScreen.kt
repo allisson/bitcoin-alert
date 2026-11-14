@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -42,6 +44,7 @@ import io.github.allisson.bitcoinalert.BitcoinAlertApp
 import io.github.allisson.bitcoinalert.R
 import io.github.allisson.bitcoinalert.data.repository.CandleState
 import io.github.allisson.bitcoinalert.domain.model.ConnectionState
+import io.github.allisson.bitcoinalert.domain.model.MonitoringState
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.ui.charts.CandleChart
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
@@ -57,6 +60,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
         onStopOrDispose { homeVisible.value = false }
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val monitoring by viewModel.monitoring.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
 
     Column(
@@ -67,6 +71,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PriceSection(state, locale)
+        monitoring?.let { MonitoringRow(it, viewModel::startMonitoring, viewModel::stopMonitoring) }
         TimeframeTabs(state.timeframe, viewModel::selectTimeframe)
         CandlesArea(state.candles, locale, viewModel::retryCandles)
     }
@@ -113,6 +118,44 @@ private fun PriceSection(state: HomeUiState, locale: Locale) {
                 },
             )
             Text(stringResource(R.string.change_period), Modifier.alignByBaseline(), color = muted, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+@Composable
+private fun MonitoringRow(monitoring: MonitoringUi, onStart: () -> Unit, onStop: () -> Unit) {
+    val (title, dot) = when (monitoring.state) {
+        MonitoringState.Running -> R.string.monitoring_running to LocalPriceColors.current.up
+        MonitoringState.Stopped -> R.string.monitoring_stopped to MaterialTheme.colorScheme.onSurfaceVariant
+        MonitoringState.Interrupted -> R.string.monitoring_interrupted to MaterialTheme.colorScheme.tertiary
+    }
+    // The buttons move to the next line as a whole at large font sizes instead of squeezing the title.
+    FlowRow(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(12.dp))
+            .padding(start = 12.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).background(dot, CircleShape))
+            Column {
+                Text(stringResource(title), style = MaterialTheme.typography.titleSmall)
+                Text(
+                    if (monitoring.activeAlerts == 0) {
+                        stringResource(R.string.no_active_alerts)
+                    } else {
+                        pluralStringResource(R.plurals.active_alerts, monitoring.activeAlerts, monitoring.activeAlerts)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (monitoring.state.canStop) OutlinedButton(onClick = onStop) { Text(stringResource(R.string.stop)) }
+            if (monitoring.state.canStart) Button(onClick = onStart) { Text(stringResource(R.string.start)) }
         }
     }
 }

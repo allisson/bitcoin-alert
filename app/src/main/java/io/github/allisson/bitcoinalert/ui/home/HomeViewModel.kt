@@ -1,6 +1,7 @@
 package io.github.allisson.bitcoinalert.ui.home
 
 import android.os.SystemClock
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
@@ -10,9 +11,13 @@ import io.github.allisson.bitcoinalert.BitcoinAlertApp
 import io.github.allisson.bitcoinalert.data.repository.CandleRepository
 import io.github.allisson.bitcoinalert.data.repository.CandleState
 import io.github.allisson.bitcoinalert.data.repository.SettingsRepository
+import io.github.allisson.bitcoinalert.domain.model.AlertState
 import io.github.allisson.bitcoinalert.domain.model.ConnectionState
+import io.github.allisson.bitcoinalert.domain.model.MonitoringState
+import io.github.allisson.bitcoinalert.domain.model.PriceAlert
 import io.github.allisson.bitcoinalert.domain.model.Ticker
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
+import io.github.allisson.bitcoinalert.service.MonitoringController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +31,8 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 
 private const val STALE_MILLIS = 10_000L
+
+data class MonitoringUi(val state: MonitoringState, val activeAlerts: Int)
 
 /** [timeframe] is `null` until the stored one is read. */
 data class HomeUiState(
@@ -64,6 +71,8 @@ class HomeViewModel(
     connection: StateFlow<ConnectionState>,
     private val candleRepository: CandleRepository,
     private val settings: SettingsRepository,
+    private val monitoringController: MonitoringController,
+    alerts: Flow<List<PriceAlert>>,
 ) : ViewModel() {
     val uiState: StateFlow<HomeUiState> = combine(
         ticker,
@@ -73,6 +82,28 @@ class HomeViewModel(
         candleRepository.state,
     ) { t, stale, conn, tf, candles -> HomeUiState(t, stale, conn, tf, candles) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    /** `null` until the stored request flag and the alerts are read. */
+    val monitoring: StateFlow<MonitoringUi?> = combine(
+        monitoringController.state,
+        alerts.map { list -> list.count { it.state == AlertState.Active } },
+        ::MonitoringUi,
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun startMonitoring() {
+        viewModelScope.launch {
+            try {
+                monitoringController.start()
+            } catch (e: IllegalStateException) {
+                // Android refused the start; nothing was written, so the state stays as it was.
+                Log.w("HomeViewModel", "Monitoring start refused", e)
+            }
+        }
+    }
+
+    fun stopMonitoring() {
+        viewModelScope.launch { monitoringController.stop() }
+    }
 
     fun selectTimeframe(timeframe: Timeframe) {
         viewModelScope.launch { settings.setTimeframe(timeframe) }
@@ -89,6 +120,8 @@ class HomeViewModel(
                     app.binanceStreamClient.connectionState,
                     app.candleRepository,
                     app.settingsRepository,
+                    app.monitoringController,
+                    app.alertRepository.alerts,
                 )
             }
         }

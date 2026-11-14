@@ -323,7 +323,9 @@ The service must:
 
 - Monitoring starts through an explicit user action.
 - A persistent notification must indicate that monitoring is active. It is not updated on every ticker message: Android drops notification updates posted too often. On Android 14+ the user can dismiss it; the service keeps running, and the main screen remains the source of truth for the monitoring state.
+- The monitoring notification (Monitoring channel) reads "Monitoring BTC/USDT" with the number of Active alerts, updated only when that number changes, and has a `Stop` action. Tapping it opens Home.
 - Users must be able to stop monitoring, from the main screen or from the notification action.
+- Monitoring keeps running with no Active alerts: only the user stops it.
 - Active alerts must remain persisted when monitoring is stopped.
 - Restarting monitoring must restore active alert evaluation.
 
@@ -483,7 +485,7 @@ Subscriptions:
 | Alerts visible, or monitoring running | `btcusdt@ticker` |
 | Neither screen visible, monitoring stopped | None — the connection is closed |
 
-Alerts needs the ticker for the distance from the current price to each target (§4). "Not visible" includes the History screen and the application in the background. Home or Alerts becoming not visible takes effect after one second, and becoming visible again within it cancels it: a configuration change (rotation, theme, font size) stops and restarts the activity, and must not close and reopen the connection. Going from Home to Alerts keeps the ticker and drops the kline stream after that second.
+Alerts needs the ticker for the distance from the current price to each target (§4). "Monitoring running" is the in-memory running flag (§2.8); its change takes effect at once, with no one-second delay. "Not visible" includes the History screen and the application in the background. Home or Alerts becoming not visible takes effect after one second, and becoming visible again within it cancels it: a configuration change (rotation, theme, font size) stops and restarts the activity, and must not close and reopen the connection. Going from Home to Alerts keeps the ticker and drops the kline stream after that second.
 
 With no stream needed, the client is in an internal `Idle` state (never shown in the UI): the connection is closed on purpose, and the backoff, the dead connection watchdog and the network callback do nothing. It leaves `Idle` (to `Connecting`) only when the desired stream set becomes non-empty. Entering `Idle` resets the backoff counter (§2.8): a deliberate close is not a failure, so the first attempt after leaving `Idle` runs without delay. Leaving `Idle` takes a user navigation, so this cannot approach Binance's attempt limit.
 
@@ -637,7 +639,8 @@ The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`):
 - A fixed Material 3 palette, light and dark, with an orange accent; the rising and falling colors belong to the same palette. Text keeps a contrast of at least 4.5:1 against its background.
 - Numbers (prices, the 24-hour change, OHLC, axes, timeframes) use JetBrains Mono, bundled in the APK with its SIL Open Font License (`assets/licenses/`), so digits keep their width as the price updates. Downloadable fonts are not used: they need Google Play services and a network call. Other text uses the system font.
 - A bottom navigation bar with Market (Home), Alerts and History. Home stays at the bottom of the back stack, so Back from Alerts or History returns to it.
-- Home: the pair with the connection status as a pill (`Connected`, `Connecting`, `Reconnecting`) and a separate `Stale` pill; the price; the 24-hour change; timeframe tabs; the chart.
+- Home: the pair with the connection status as a pill (`Connected`, `Connecting`, `Reconnecting`) and a separate `Stale` pill; the price; the 24-hour change; the monitoring row; timeframe tabs; the chart.
+  - The monitoring row shows a dot (rising color while Running, muted while Stopped, amber while Interrupted), "Monitoring running", "Monitoring stopped" or "Monitoring interrupted", the number of Active alerts ("No active alerts" at zero) and the buttons of §2.1. At large font sizes the buttons move to the next line as a whole.
 - Alerts: the current price under the title, then the Active, Triggered and Disabled sections; empty sections are hidden. The Alerts navigation item shows the number of Active alerts as a badge (hidden at zero).
   - Each Active alert shows the distance from the current price to its target, `|target − price| / price` with 2 decimal places (`HALF_UP`), and a bar filled `1 − distance / 10%`, clamped to [0, 1] (full at the target, empty at 10% or more). When the price is already past the target (above it for `ABOVE`, below it for `BELOW`), the alert shows "Price above target · waits for a crossing" (or below) and no bar. Without a price, only the creation date.
   - Actions by state: Active has a switch (on; turning it off disables) and Disabled a switch (off; turning it on enables); Triggered has a Reactivate button and shows the observed price and trigger time from its history entry. Every alert has a menu with Delete, an explicit action instead of a swipe, confirmed by a dialog ("Its history stays").
