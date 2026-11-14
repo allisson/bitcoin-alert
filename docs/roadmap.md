@@ -455,7 +455,8 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 - [x] Validate the complete release workflow with `v0.x.y` tags only: every tag consumes a `versionCode`, so never use a `v1.x` tag for testing. `v0.1.0` and `v0.1.1` published as pre-releases with the APK and checksum; `sha256sum -c` passes.
 - [x] Validate application startup performance on the device with the Release APK: 296 to 364 ms cold start on the Galaxy A54 (`spec.md` §7, Device test results).
 - [x] Measure chart rendering performance on the device with the Release APK: 11.64% janky frames while scrolling, 19 ms median frame time on a 60 Hz display (`spec.md` §7, Device test results).
-- [ ] Decide whether chart scrolling needs profiling: the median frame (19 ms) is over the 16.7 ms budget of a 60 Hz display.
+- [x] Decide whether chart scrolling needs profiling: compare scrolling with the axis refit on and off; profile only if turning it off helps. It does: 5.32% to 6.49% janky frames with the refit, 2.92% to 3.53% without (`spec.md` §7, Device test results). The single manual measurement above (19 ms median) was noise; scripted rounds give 15 ms.
+- [x] Profile the axis refit while scrolling with a Perfetto trace, and cut its cost if the trace shows a fix in our code. The trace showed a refit almost every frame, each laying out the axis labels again; the refit now runs only when the fit changes, at most every 150 ms: 4.51% to 5.25% janky frames against 6.57% to 9.13%, measured back to back (`spec.md` §2.3, §7).
 
 ### Documentation
 
