@@ -429,9 +429,9 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
   keytool -list -v -keystore ~/keys/bitcoin-alert-release.jks -alias bitcoin-alert | grep SHA256
   ```
 
-- [ ] Create the limited distribution account at https://android.google.com/developerconsole/developers (2-Step Verification is already on; link a Google payments profile and a contact email).
-- [ ] On the **Packages** page, register `io.github.allisson.bitcoinalert` with the SHA-256 fingerprint; wait for *Registered* (email notice). Required before the first release is installed from GitHub Releases on a certified device.
-- [ ] Record the outcome and the installation path (device authorization by QR code or link, up to 50 devices) in `spec.md` §6.
+- [ ] Create the full distribution account at https://android.google.com/developerconsole/developers (`spec.md` §6): pay the one-time US$ 25 and verify identity with a government-issued photo ID, a proof of address, and an email and phone number (2-Step Verification is already on).
+- [ ] On the **Packages** page, register `io.github.allisson.bitcoinalert` with the SHA-256 fingerprint; wait for *Registered* (email notice). Done before the first release tag, so GitHub Releases installs keep working after the 2027 global rollout.
+- [ ] Record the outcome (application ID and signing certificate fingerprint registered) and the installation path in `spec.md` §6.
 - [ ] Configure signing credentials as GitHub Actions Secrets: `KEYSTORE_BASE64` (output of `base64 -i ~/keys/bitcoin-alert-release.jks`), `KEYSTORE_PASSWORD` and `KEY_ALIAS`. The PKCS12 keystore `keytool` generates uses the same password for the store and the key, so Gradle passes `KEYSTORE_PASSWORD` as both `storePassword` and `keyPassword`.
 - [ ] Configure Release signing.
 - [ ] Verify signing locally.
