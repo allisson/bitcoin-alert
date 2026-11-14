@@ -34,6 +34,39 @@ fun alertLabel(direction: AlertDirection, target: BigDecimal, price: BigDecimal?
     }
 }
 
+/**
+ * Label centers for labels [height] tall wanted at the [desired] centers (same order back), kept
+ * [gap] apart inside `[top, bottom]` (spec.md §2.3): in order from the top, a label that would touch
+ * the one above moves down, and a stack past an edge moves back inside. Labels that cannot all fit
+ * are spread evenly over the area, overlapping.
+ */
+fun stackLabels(desired: List<Float>, height: Float, gap: Float, top: Float, bottom: Float): List<Float> {
+    val first = top + height / 2
+    val last = bottom - height / 2
+    if (desired.isEmpty()) return emptyList()
+    if (last <= first) return desired.map { (top + bottom) / 2 }
+    val order = desired.indices.sortedBy { desired[it] }
+    val n = desired.size
+    val ys = FloatArray(n)
+    val step = height + gap
+    if (n > 1 && (n - 1) * step > last - first) {
+        val even = (last - first) / (n - 1)
+        order.forEachIndexed { rank, i -> ys[i] = first + rank * even }
+        return ys.toList()
+    }
+    var previous = Float.NEGATIVE_INFINITY
+    for (i in order) {
+        ys[i] = maxOf(desired[i].coerceIn(first, last), previous + step)
+        previous = ys[i]
+    }
+    var next = Float.POSITIVE_INFINITY
+    for (i in order.reversed()) {
+        ys[i] = minOf(ys[i], last, next - step)
+        next = ys[i]
+    }
+    return ys.toList()
+}
+
 /** The alert a long press on the chart fills in (spec.md §2.3); Serializable to survive recreation. */
 data class AlertDraft(val direction: AlertDirection, val target: BigDecimal) : Serializable
 

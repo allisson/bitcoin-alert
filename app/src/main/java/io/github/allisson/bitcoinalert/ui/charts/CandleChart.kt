@@ -83,6 +83,7 @@ import java.util.Locale
 
 private val CANDLE_WIDTH = 8.dp
 private val CANDLE_SPACING = 4.dp
+private val LABEL_GAP = 2.dp
 
 /** The `openTime` of every rising candle, so the volume bar takes its candle's color. */
 private val RisingKey = ExtraStore.Key<Set<Double>>()
@@ -356,20 +357,27 @@ private class PriceLines(
         bottom = bounds.bottom
         minY = range.minY
         maxY = range.maxY
-        alerts.forEach { alert ->
-            val above = alert.direction == AlertDirection.ABOVE
-            val target = alert.targetPrice.toDouble()
-            val pin = pinOf(target, range.minY, range.maxY)
-            val tag = if (above) upTag else downTag
-            val label = alertLabel(alert.direction, alert.targetPrice, price, pin, locale)
-            val half = tag.getHeight(context, label) / 2
-            val y = when (pin) {
-                Pin.Top -> bounds.top + half
-                Pin.Bottom -> bounds.bottom - half
-                null -> context.priceY(target)
+        // Highest target first, so labels at the same edge stack in price order.
+        val shown = alerts.sortedByDescending { it.targetPrice }.map { alert ->
+            val pin = pinOf(alert.targetPrice.toDouble(), range.minY, range.maxY)
+            Triple(alert, pin, alertLabel(alert.direction, alert.targetPrice, price, pin, locale))
+        }
+        if (shown.isNotEmpty()) {
+            val height = upTag.getHeight(context, shown.first().third)
+            val lineYs = shown.map { (alert, pin) ->
+                when (pin) {
+                    Pin.Top -> bounds.top + height / 2
+                    Pin.Bottom -> bounds.bottom - height / 2
+                    null -> context.priceY(alert.targetPrice.toDouble())
+                }
             }
-            if (pin == null) (if (above) upLine else downLine).drawHorizontal(context, bounds.left, bounds.right, y)
-            tag.draw(context, label, bounds.left + tag.getWidth(context, label) / 2, y, Position.Horizontal.Center, Position.Vertical.Center)
+            val labelYs = stackLabels(lineYs, height, with(context) { LABEL_GAP.pixels }, bounds.top, bounds.bottom)
+            shown.forEachIndexed { i, (alert, pin, label) ->
+                val above = alert.direction == AlertDirection.ABOVE
+                if (pin == null) (if (above) upLine else downLine).drawHorizontal(context, bounds.left, bounds.right, lineYs[i])
+                val tag = if (above) upTag else downTag
+                tag.draw(context, label, bounds.left + tag.getWidth(context, label) / 2, labelYs[i], Position.Horizontal.Center, Position.Vertical.Center)
+            }
         }
         val candle = last ?: return
         val rising = candle.close >= candle.open

@@ -47,6 +47,21 @@ class ChartLogicTest {
     }
 
     @Test
+    fun `alert labels stack without touching, inside the area, in their order`() {
+        // Labels 10 px tall, 2 px apart, in an area from 0 to 100: centers from 5 to 95.
+        fun stack(vararg y: Float) = stackLabels(y.toList(), 10f, 2f, 0f, 100f)
+        assertEquals(emptyList<Float>(), stack())
+        assertEquals(listOf(20f, 50f), stack(20f, 50f))
+        assertEquals(listOf(50f, 62f), stack(50f, 55f))
+        assertEquals(listOf(62f, 50f), stack(55f, 50f))
+        assertEquals(listOf(5f, 17f), stack(5f, 5f))
+        assertEquals(listOf(83f, 95f), stack(95f, 95f))
+        assertEquals(listOf(71f, 83f, 95f), stack(90f, 94f, 95f))
+        assertEquals(listOf(5f), stack(-10f))
+        assertEquals((0..9).map { 5f + it * 10 }, stack(*FloatArray(10) { 50f }))
+    }
+
+    @Test
     fun `candle change goes from the open to the close`() {
         fun candle(open: String, close: String) =
             Candle(0, BigDecimal(open), BigDecimal(close), BigDecimal(open), BigDecimal(close), BigDecimal.ONE)
