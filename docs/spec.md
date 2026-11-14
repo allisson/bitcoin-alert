@@ -656,7 +656,7 @@ The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`); the chart ov
   - The monitoring row shows a dot (rising color while Running, muted while Stopped, amber while Interrupted), "Monitoring running", "Monitoring stopped" or "Monitoring interrupted", the number of Active alerts ("No active alerts" at zero) and the buttons of §2.1. At large font sizes the buttons move to the next line as a whole.
 - Alerts: the current price under the title, then the Active, Triggered and Disabled sections; empty sections are hidden. The Alerts navigation item shows the number of Active alerts as a badge (hidden at zero).
   - Each Active alert shows the distance from the current price to its target, `|target − price| / price` with 2 decimal places (`HALF_UP`), and a bar filled `1 − distance / 10%`, clamped to [0, 1] (full at the target, empty at 10% or more). When the price is already past the target (above it for `ABOVE`, below it for `BELOW`), the alert shows "Price above target · waits for a crossing" (or below) and no bar. Without a price, only the creation date.
-  - Actions by state: Active has a switch (on; turning it off disables) and Disabled a switch (off; turning it on enables); Triggered shows the observed price and trigger time from its history entry, with a Reactivate button below them (a trailing button next to the menu leaves the target too narrow and it wraps). Every alert has a menu with Delete, an explicit action instead of a swipe, confirmed by a dialog ("Its history stays").
+  - Actions by state: Active has a switch (on; turning it off disables) and Disabled a switch (off; turning it on enables); Triggered shows the observed price and trigger time from its history entry, with a Reactivate button below them (a trailing button next to the menu leaves the target too narrow and it wraps). When the direction and the target do not fit on one line (large font scales), the whole target moves below the direction instead of wrapping. Every alert has a menu with Delete, an explicit action instead of a swipe, confirmed by a dialog ("Its history stays").
   - New alert opens a bottom sheet: Above/Below segmented buttons, the target field, the parsed target and its percentage from the current price ("Saves as 100,000.50 · +2.66% from now"), the validation error inline, and Create, enabled only for a valid target. A target already past the current price for the chosen direction is allowed, with a warning that the alert fires only after the price comes back and crosses it. There are no quick-value chips.
 - History: entries grouped by day (device time zone), newest first. Day headers read "Today", "Yesterday", then the short date with the device locale (`Nov 8`), with the year only when it is not the current one (`Oct 9, 2025`). Each entry shows the direction, the target, the observed price and the trigger time.
 - The target price is typed with the system decimal keyboard.
@@ -871,7 +871,7 @@ Release APK `v0.1.2` from GitHub Releases on the Galaxy A54, November 14, 2026, 
 | Battery optimization action | Allow opened the system dialog "Parar a otimização do uso da bateria?"; after OK the app is on the `deviceidle` whitelist and the warning is gone. |
 | Backup and device-to-device transfer | Local backup transport (`bmgr`). Cloud backup: "Backup is not allowed". Device transfer (`is_device_transfer=true`): the transport rejected the package as empty, while a control app (Google Calculator) sent 67,584 bytes. After `pm clear` and `bmgr restore`, Alerts and History stayed empty. The Google transport was restored afterwards. |
 | Edge-to-edge | Home, Alerts and History draw behind the status and navigation bars with the content inside the insets. |
-| Accessibility (§4) | `▼` and the sign with the 24h change; icon buttons labeled (`Enabled` switch, `More options`); at font scale 2.0 every screen stays usable, but an Active alert's target wraps (`65.171,` / `00`). |
+| Accessibility (§4) | `▼` and the sign with the 24h change; icon buttons labeled (`Enabled` switch, `More options`); at font scale 2.0 every screen stays usable. An Active alert's target wrapped (`65.171,` / `00`); after the fix the whole target moves below the direction (debug build, Active and Disabled rows). |
 | GitHub Actions publishes a signed APK | `v0.1.2` release workflow: tests, signed APK, checksum and pre-release. |
 
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
@@ -907,7 +907,7 @@ The MVP is complete when (evidence: §7, MVP walkthrough):
 - [x] Tapping an alert notification opens the History screen.
 - [x] Alert data is excluded from cloud backup and device-to-device transfer.
 - [x] Every screen is edge-to-edge with system bar insets applied.
-- [ ] The accessibility requirements in §4 are met.
+- [x] The accessibility requirements in §4 are met.
 - [x] GitHub Actions builds and publishes a signed APK.
 
 ## 9. Future Considerations
