@@ -145,6 +145,20 @@ class BinanceStreamClientTest {
     }
 
     @Test
+    fun `kline messages and control responses do not refresh the ticker's receive time`() = runTest {
+        val client = client(HOME_1H)
+        open()
+        advance(1_000)
+        message()
+
+        advance(5_000)
+        message(kline("1h"))
+        message("""{"result":null,"id":1}""")
+
+        assertEquals(1_000L, client.ticker.value?.receivedAt)
+    }
+
+    @Test
     fun `consecutive failures before opening wait the backoff and stay Connecting`() = runTest {
         val client = client()
 
@@ -222,6 +236,21 @@ class BinanceStreamClientTest {
         advance(120_000)
 
         assertEquals(1, attempts.size)
+        assertFalse(last.cancelled)
+    }
+
+    @Test
+    fun `watchdog does not run while Reconnecting`() = runTest {
+        val client = client()
+        open()
+        fail()
+        advance(1_000)
+        assertEquals(2, attempts.size)
+
+        advance(120_000)
+
+        assertEquals(Reconnecting, client.connectionState.value)
+        assertEquals(2, attempts.size)
         assertFalse(last.cancelled)
     }
 
