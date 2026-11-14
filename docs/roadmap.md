@@ -382,16 +382,16 @@ These include the Phase 4 device checks; record the results in `spec.md` and clo
 
 ### Application quality
 
-- [ ] Review error handling.
-- [ ] Review logging.
-- [ ] Review permission declarations.
-- [ ] Review network security configuration.
-- [ ] Remove unused dependencies.
-- [ ] Remove debug-only code from Release builds.
-- [ ] Validate application startup performance.
-- [ ] Validate chart rendering performance.
-- [ ] Verify no unnecessary personal data is collected.
-- [ ] Verify alert data is not included in Android backups or device-to-device transfer (`allowBackup="false"`, `dataExtractionRules`).
+- [x] Review error handling. Writes started by user actions log a database or DataStore failure instead of crashing (`launchUserWrite`, `spec.md` §2.5); the service already stops on a database failure (§2.8).
+- [x] Review logging. Only `Log.w`, for discarded messages, lost connections and refused or failed operations; no user data (targets, ids) is logged.
+- [x] Review permission declarations. The merged manifest has the six permissions of `spec.md` §5, plus `androidx.core`'s app-internal `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`.
+- [x] Review network security configuration. `cleartextTrafficPermitted="false"` in the base config, no `usesCleartextTraffic`.
+- [x] Remove unused dependencies. Removed `ui-tooling` and `ui-tooling-preview` (no `@Preview` in the code).
+- [x] Remove debug-only code from Release builds. None: `app/src/debug` holds only the debug app name.
+- [ ] Validate application startup performance (on the device, with Device testing).
+- [ ] Validate chart rendering performance (on the device, with Device testing).
+- [x] Verify no unnecessary personal data is collected. No accounts, analytics or backend; the only network traffic is the Binance public market data.
+- [x] Verify alert data is not included in Android backups or device-to-device transfer (`allowBackup="false"`, `dataExtractionRules`). Both set; the rules exclude every domain from cloud backup and device transfer. The on-device check is in `spec.md` §8 (Phase 7).
 
 **Acceptance criteria:**
 
