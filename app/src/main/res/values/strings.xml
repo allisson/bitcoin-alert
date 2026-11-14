@@ -55,4 +55,13 @@
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="observed">Observed</string>
+    <string name="monitoring_running">Monitoring running</string>
+    <string name="monitoring_stopped">Monitoring stopped</string>
+    <string name="monitoring_interrupted">Monitoring interrupted</string>
+    <string name="no_active_alerts">No active alerts</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="channel_monitoring">Monitoring</string>
+    <string name="channel_alerts">Price alerts</string>
+    <string name="monitoring_notification_title">Monitoring BTC/USDT</string>
 </resources>

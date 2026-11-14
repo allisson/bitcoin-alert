@@ -38,10 +38,15 @@ private fun Flow<Boolean>.hiddenAfterDelay() = withIndex().transformLatest { (in
     emit(visible)
 }
 
-/** The desired stream set over time, with monitoring stopped (Phase 4 wires the real state). */
-fun desiredStreamsFlow(homeVisible: Flow<Boolean>, alertsVisible: Flow<Boolean>, timeframe: Flow<Timeframe>): Flow<Set<String>> =
-    combine(homeVisible.hiddenAfterDelay(), alertsVisible.hiddenAfterDelay(), timeframe) { home, alerts, tf ->
-        desiredStreams(home, alerts, monitoringRunning = false, tf)
+/** The desired stream set over time. Monitoring stopping takes effect at once: no screen to restart. */
+fun desiredStreamsFlow(
+    homeVisible: Flow<Boolean>,
+    alertsVisible: Flow<Boolean>,
+    monitoringRunning: Flow<Boolean>,
+    timeframe: Flow<Timeframe>,
+): Flow<Set<String>> =
+    combine(homeVisible.hiddenAfterDelay(), alertsVisible.hiddenAfterDelay(), monitoringRunning, timeframe) { home, alerts, monitoring, tf ->
+        desiredStreams(home, alerts, monitoring, tf)
     }.distinctUntilChanged()
 
 sealed interface KlineEvent {

@@ -255,10 +255,10 @@ This is a critical phase because Android background execution restrictions can a
 ### Platform investigation
 
 - [ ] Review current Android Foreground Service requirements.
-- [ ] Declare the `specialUse` Foreground Service type with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; start it with `ServiceCompat.startForeground`.
+- [x] Declare the `specialUse` Foreground Service type with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; start it with `ServiceCompat.startForeground`.
 - [ ] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below).
 - [ ] Check whether alert vibration works without `VIBRATE`; if it does, remove the permission and its row in `spec.md` §5.
-- [ ] Set `android:allowBackup="false"` and `android:dataExtractionRules` excluding all data from cloud backup and device transfer (`spec.md` §5).
+- [x] Set `android:allowBackup="false"` and `android:dataExtractionRules` excluding all data from cloud backup and device transfer (`spec.md` §5).
 - [ ] Review required manifest declarations.
 - [ ] Review runtime permission requirements.
 - [ ] Validate behavior on the `minSdk` and `targetSdk` versions.
@@ -267,35 +267,36 @@ This is a critical phase because Android background execution restrictions can a
 
 ### Service implementation
 
-- [ ] Implement `PriceMonitorService`, in the main process (no `android:process`; `spec.md` §2.8).
-- [ ] Implement explicit monitoring start action.
-- [ ] Implement monitoring stop action.
+- [x] Implement `PriceMonitorService`, in the main process (no `android:process`; `spec.md` §2.8).
+- [x] Implement explicit monitoring start action.
+- [x] Implement monitoring stop action.
 - [ ] Integrate the Binance WebSocket client.
 - [ ] Integrate the alert engine.
-- [ ] Implement service lifecycle management.
-- [ ] Implement persistent notification.
-- [ ] Persist the `monitoringRequested` flag in DataStore, through the single process-scoped DataStore instance created in Phase 2 and shared with the UI (`spec.md` §3.5).
-- [ ] Expose "the service is running" as a process-scoped in-memory `StateFlow`: `true` from the start action once `startForegroundService` returns and from `onCreate`, `false` in `onDestroy` (`spec.md` §2.8).
-- [ ] Derive and expose the monitoring state (Stopped, Running, Interrupted; `spec.md` §2.8), with unit tests.
-- [ ] Return `START_STICKY`; handle a refused restart as Interrupted; call `ServiceCompat.startForeground` first in every `onStartCommand`, before any suspending work; on a restart with a `null` intent, then `stopSelf()` if `monitoringRequested` is `false` (`spec.md` §2.8), with Robolectric tests calling `onStartCommand(null, 0, 1)` directly for both values (`spec.md` §7).
-- [ ] Start: `startForegroundService`, then set the running flag, then write `monitoringRequested = true`; stop: write `false` before stopping the service, so a normal start or stop never shows Interrupted (`spec.md` §2.8), with unit tests.
-- [ ] Display monitoring status and the monitoring control on the main screen: `Start` while Stopped, `Stop` while Running, both while Interrupted (`spec.md` §2.1), with unit tests.
+- [x] Implement service lifecycle management.
+- [x] Implement persistent notification.
+- [x] Persist the `monitoringRequested` flag in DataStore, through the single process-scoped DataStore instance created in Phase 2 and shared with the UI (`spec.md` §3.5).
+- [x] Expose "the service is running" as a process-scoped in-memory `StateFlow`: `true` from the start action once `startForegroundService` returns and from `onCreate`, `false` in `onDestroy` (`spec.md` §2.8).
+- [x] Derive and expose the monitoring state (Stopped, Running, Interrupted; `spec.md` §2.8), with unit tests.
+- [x] Return `START_STICKY`; handle a refused restart as Interrupted; call `ServiceCompat.startForeground` first in every `onStartCommand`, before any suspending work; on a restart with a `null` intent, then `stopSelf()` if `monitoringRequested` is `false` (`spec.md` §2.8), with Robolectric tests calling `onStartCommand(null, 0, 1)` directly for both values (`spec.md` §7).
+- [x] Start: `startForegroundService`, then set the running flag, then write `monitoringRequested = true`; stop: write `false` before stopping the service, so a normal start or stop never shows Interrupted (`spec.md` §2.8), with unit tests.
+- [x] Display monitoring status and the monitoring control on the main screen: `Start` while Stopped, `Stop` while Running, both while Interrupted (`spec.md` §2.1), with unit tests.
 - [ ] Warn on the main screen when Active alerts exist and monitoring is Stopped or Interrupted, with unit tests (`spec.md` §7).
 - [ ] Offer the battery optimization exemption dialog on user action, from Home next to the monitoring control; hide the action once `isIgnoringBatteryOptimizations()` is `true`, re-evaluated on Home `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
 - [ ] Evaluate alerts only while monitoring is running.
 - [ ] Implement connection status exposure.
-- [ ] Implement service cleanup.
-- [ ] Make `onStartCommand` idempotent: a repeated start must not open a second connection or evaluation loop (Android already keeps a single service instance).
-- [ ] Wire the real monitoring state into the stream set derivation (Phase 1).
+- [x] Implement service cleanup.
+- [x] Make `onStartCommand` idempotent: a repeated start must not open a second connection or evaluation loop (Android already keeps a single service instance).
+- [x] Wire the real monitoring state into the stream set derivation (Phase 1).
 - [ ] Ensure database operations are safe during service execution.
 
 ### Notification implementation
 
-- [ ] Create the monitoring notification channel (low importance).
-- [ ] Create the price alerts notification channel (high importance).
-- [ ] Display monitoring status (do not update the notification on every ticker message).
-- [ ] Add an action to stop monitoring.
+- [x] Create the monitoring notification channel (low importance).
+- [x] Create the price alerts notification channel (high importance).
+- [x] Display monitoring status (do not update the notification on every ticker message).
+- [x] Add an action to stop monitoring.
 - [ ] Open the History screen when an alert notification is tapped.
+- [ ] Open Home when the monitoring notification is tapped (`spec.md` §2.8).
 - [ ] Implement price alert notifications, posted only after the trigger transaction commits, each tagged with its history entry id and a fixed alert ID (`notify(historyId.toString(), ALERT_NOTIFICATION_ID, …)`; `spec.md` §2.6), with unit tests.
 - [ ] Configure default notification sound.
 - [ ] Configure vibration.

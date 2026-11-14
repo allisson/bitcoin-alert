@@ -38,9 +38,10 @@ android {
         compose = true
     }
 
-    // android.util.Log returns defaults instead of throwing in JVM tests.
+    // android.util.Log returns defaults instead of throwing in JVM tests; Robolectric reads app resources.
     testOptions {
         unitTests.isReturnDefaultValues = true
+        unitTests.isIncludeAndroidResources = true
     }
 }
 

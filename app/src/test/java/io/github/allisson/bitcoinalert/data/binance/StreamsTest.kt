@@ -26,11 +26,12 @@ class StreamsTest {
 
     private val visible = MutableStateFlow(false)
     private val alertsVisible = MutableStateFlow(false)
+    private val monitoring = MutableStateFlow(false)
     private val timeframe = MutableStateFlow(Timeframe.H1)
 
     private fun kotlinx.coroutines.test.TestScope.collect(): List<Set<String>> {
         val sets = mutableListOf<Set<String>>()
-        backgroundScope.launch { desiredStreamsFlow(visible, alertsVisible, timeframe).collect { sets += it } }
+        backgroundScope.launch { desiredStreamsFlow(visible, alertsVisible, monitoring, timeframe).collect { sets += it } }
         runCurrent()
         return sets
     }
@@ -102,5 +103,26 @@ class StreamsTest {
         advanceTimeBy(1_000)
         runCurrent()
         assertEquals(listOf(setOf("btcusdt@ticker"), emptySet<String>()), sets)
+    }
+
+    @Test
+    fun `monitoring keeps the ticker with no screen visible, and its stop closes the set at once`() = runTest {
+        val sets = collect()
+        monitoring.value = true
+        runCurrent()
+        monitoring.value = false
+        runCurrent()
+        assertEquals(listOf(emptySet(), setOf("btcusdt@ticker"), emptySet()), sets)
+    }
+
+    @Test
+    fun `hiding Home with monitoring running keeps the ticker and drops the kline after a second`() = runTest {
+        visible.value = true
+        monitoring.value = true
+        val sets = collect()
+        visible.value = false
+        advanceTimeBy(1_000)
+        runCurrent()
+        assertEquals(listOf(HOME_1H, setOf("btcusdt@ticker")), sets)
     }
 }

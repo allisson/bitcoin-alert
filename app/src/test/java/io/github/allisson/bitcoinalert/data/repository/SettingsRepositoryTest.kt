@@ -37,4 +37,16 @@ class SettingsRepositoryTest {
         store.edit { it[stringPreferencesKey("timeframe")] = "3m" }
         assertEquals(Timeframe.H1, SettingsRepository(store).timeframe.first())
     }
+
+    @Test
+    fun `monitoring is not requested with nothing stored`() = runTest {
+        assertEquals(false, SettingsRepository(dataStore()).monitoringRequested.first())
+    }
+
+    @Test
+    fun `monitoring request is read back`() = runTest {
+        val settings = SettingsRepository(dataStore())
+        settings.setMonitoringRequested(true)
+        assertEquals(true, settings.monitoringRequested.first())
+    }
 }
