@@ -606,6 +606,7 @@ The application should contain three primary areas:
 - Monitoring status and start/stop control.
 - Notifications-disabled and monitoring-stopped warnings (§2.1).
 - Battery optimization exemption action, next to the monitoring control, shown only while not exempt (§2.1, §2.8).
+- The warnings and the battery action are rows below the monitoring row, in the tertiary container color, in this order: `Monitoring is off: active alerts are not checked` (no button), `Notifications are off: alerts cannot reach you` (`Settings`), `Battery optimization can pause monitoring` (`Allow`). If a settings screen does not exist on the device, the tap does nothing and the row stays.
 - Candlestick chart.
 - Timeframe selector.
 - Quick access to alerts and history.
