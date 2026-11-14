@@ -83,6 +83,10 @@ class HomeViewModel(
     ) { t, stale, conn, tf, candles -> HomeUiState(t, stale, conn, tf, candles) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
+    /** Drawn as lines on the chart (spec.md §2.3). */
+    val activeAlerts: StateFlow<List<PriceAlert>> = alerts.map { list -> list.filter { it.state == AlertState.Active } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     /** `null` until the stored request flag and the alerts are read. */
     val monitoring: StateFlow<MonitoringUi?> = combine(
         monitoringController.state,
