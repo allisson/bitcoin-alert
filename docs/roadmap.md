@@ -252,12 +252,14 @@ Alerts are evaluated only while monitoring runs (`spec.md` §2.5), which arrives
 
 This is a critical phase because Android background execution restrictions can affect the application's main functionality.
 
+The physical device checks of this phase (vibration without `VIBRATE`, screen-off monitoring, Task Manager, Recents, notification dismissal, reboot, manufacturer restrictions, battery) are deferred to Phase 5 Device testing. The tasks below that depend on them stay open until those checks run.
+
 ### Platform investigation
 
 - [ ] Review current Android Foreground Service requirements.
 - [x] Declare the `specialUse` Foreground Service type with `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; start it with `ServiceCompat.startForeground`.
-- [ ] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below). `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is declared (4c); `VIBRATE` waits for the device check below.
-- [ ] Check whether alert vibration works without `VIBRATE`; if it does, remove the permission and its row in `spec.md` §5.
+- [ ] Declare the remaining permissions listed in `spec.md` §5 (network ones are declared in Phase 1), except `WAKE_LOCK`, declared only if the screen-off test requires it (Battery validation below). `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is declared (4c); `VIBRATE` is not declared and waits for the device check below.
+- [ ] Check whether alert vibration works without `VIBRATE`; if it does, remove its row in `spec.md` §5, otherwise declare it (run in Phase 5 Device testing).
 - [x] Set `android:allowBackup="false"` and `android:dataExtractionRules` excluding all data from cloud backup and device transfer (`spec.md` §5).
 - [ ] Review required manifest declarations.
 - [ ] Review runtime permission requirements.
@@ -359,9 +361,16 @@ Unit tests are written with each feature, in the phase that implements it.
 
 ### Device testing
 
+These include the Phase 4 device checks; record the results in `spec.md` and close the matching Phase 4 tasks.
+
 - [ ] Test on a physical Android device.
 - [ ] Test on different Android versions.
-- [ ] Test screen-off monitoring.
+- [ ] Test alert vibration without the `VIBRATE` permission, with the device in vibrate mode.
+- [ ] Test screen-off monitoring, unplugged, for 60 minutes, without and then with the battery optimization exemption; measure the alert delay against the `1m` candle that crossed the target.
+- [ ] Document the manufacturer battery restrictions found (default app battery setting, sleeping apps) and what the exemption changes.
+- [ ] Test swiping the app away from Recents while monitoring runs.
+- [ ] Test dismissing the monitoring notification (Android 14+).
+- [ ] Measure battery consumption overnight, with monitoring stopped and with monitoring running.
 - [ ] Test Wi-Fi disconnection.
 - [ ] Test mobile data transitions.
 - [ ] Test airplane mode transitions.
