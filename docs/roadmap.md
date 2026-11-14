@@ -186,7 +186,7 @@
 - [x] Implement alert DAO.
 - [x] Implement history DAO (its queries live in `AlertDao`: the trigger transaction writes both tables).
 - [x] Enable Room schema export (`exportSchema = true`, `room { schemaDirectory(...) }`) and commit the `schemas/` directory; migrations start after v1.0.0.
-- [ ] Bump `@Database(version)` on every schema change, including during `v0.*`: without the bump Room crashes on the identity hash check, fallback or not (`spec.md` §3.5).
+- [x] Bump `@Database(version)` on every schema change, including during `v0.*`: without the bump Room crashes on the identity hash check, fallback or not (`spec.md` §3.5). Schema v1; the rule is a comment on `AppDatabase` and in `AGENTS.md`.
 - [x] Build the database with `fallbackToDestructiveMigration(dropAllTables = true)` while the version is `v0.*`, so a schema change between pre-releases drops test data instead of crashing (`spec.md` §3.5). Replaced in Phase 7.
 - [x] Keep history entries when an alert is deleted (no FK cascade).
 - [x] Implement transactional alert triggering (conditional `UPDATE` matching `activationCycle`, history insert only if one row changed; enabling and reactivation increment `activationCycle` in a single `UPDATE`; `spec.md` §3.5).
@@ -225,13 +225,13 @@
 
 ### History interface
 
-- [ ] Implement alert history screen.
-- [ ] Display target price.
-- [ ] Display observed price.
-- [ ] Display alert direction.
-- [ ] Display trigger timestamp (device time zone and locale; `spec.md` §2.7).
-- [ ] Group entries by day in the device time zone (`spec.md` §4 Visual design).
-- [ ] Sort records by newest first (`ORDER BY triggeredAt DESC, id DESC`, auto-generated `Long` id; `spec.md` §2.7).
+- [x] Implement alert history screen.
+- [x] Display target price.
+- [x] Display observed price.
+- [x] Display alert direction.
+- [x] Display trigger timestamp (device time zone and locale; `spec.md` §2.7).
+- [x] Group entries by day in the device time zone (`spec.md` §4 Visual design).
+- [x] Sort records by newest first (`ORDER BY triggeredAt DESC, id DESC`, auto-generated `Long` id; `spec.md` §2.7).
 - [x] Validate history persistence across a database reopen (integration test).
 
 **Acceptance criteria:**

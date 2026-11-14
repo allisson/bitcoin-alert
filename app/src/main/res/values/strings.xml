@@ -15,7 +15,6 @@
     <string name="candles_error">Couldn\'t load candles</string>
     <string name="retry">Retry</string>
     <string name="candle_ohlc">%1$s  O %2$s  H %3$s  L %4$s  C %5$s  V %6$s</string>
-    <string name="history_placeholder">Alert history arrives in a later version.</string>
     <plurals name="active_alerts">
         <item quantity="one">%d active alert</item>
         <item quantity="other">%d active alerts</item>
@@ -51,4 +50,9 @@
     <string name="already_above">Price is already above this target: the alert fires only after it falls back and crosses up.</string>
     <string name="already_below">Price is already below this target: the alert fires only after it rises back and crosses down.</string>
     <string name="create_alert">Create alert</string>
+    <string name="history_subtitle">Triggered alerts, newest first</string>
+    <string name="no_history">No alert has triggered yet.</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="observed">Observed</string>
 </resources>
