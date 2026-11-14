@@ -4,7 +4,9 @@ import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.Candle
 import io.github.allisson.bitcoinalert.ui.alerts.percentFromPrice
 import io.github.allisson.bitcoinalert.ui.home.formatPercent
+import java.io.Serializable
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.Locale
 
 /** An alert line outside the candles' price range is pinned to that edge (spec.md §2.3). */
@@ -30,6 +32,22 @@ fun alertLabel(direction: AlertDirection, target: BigDecimal, price: BigDecimal?
         Pin.Bottom -> append(" ↓")
         null -> Unit
     }
+}
+
+/** The alert a long press on the chart fills in (spec.md §2.3); Serializable to survive recreation. */
+data class AlertDraft(val direction: AlertDirection, val target: BigDecimal) : Serializable
+
+/**
+ * The draft for a long press at canvas [y], on a price axis from [minY] at [bottom] to [maxY] at
+ * [top]: the price there rounded to a whole dollar, ABOVE when it is at or over the current
+ * [price], BELOW otherwise. `null` outside `[top, bottom]` (over the time axis).
+ */
+fun alertDraftAt(y: Float, top: Float, bottom: Float, minY: Double, maxY: Double, price: BigDecimal): AlertDraft? {
+    if (y < top || y > bottom || bottom <= top) return null
+    val value = maxY - (y - top) / (bottom - top) * (maxY - minY)
+    val target = BigDecimal(value).setScale(0, RoundingMode.HALF_UP).setScale(2)
+    if (target.signum() <= 0) return null
+    return AlertDraft(if (target >= price) AlertDirection.ABOVE else AlertDirection.BELOW, target)
 }
 
 /** The candle's own change, from its open to its close, in percent with 2 decimal places. */

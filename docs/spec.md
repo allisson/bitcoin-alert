@@ -148,6 +148,7 @@ Chart overlays (`docs/prototypes/chart-options.html`, option 2):
 - **Crosshair:** the selected candle shows a vertical line and a horizontal line at its close, with the close tagged at the end of the chart and the time tagged over the time axis.
 - **Volume:** each bar takes its candle's rising or falling color, lighter.
 - **Alert lines:** each Active alert is a dashed line at its target, in the rising color for `ABOVE` and the falling color for `BELOW`, labeled at the start of the chart with an arrow, the target without decimals and its signed distance from the current ticker price (`▲ 102,000  +4.71%`, no distance before the first price). Disabled and Triggered alerts are not drawn. The price axis keeps the candles' intrinsic range: an alert outside it is pinned to the top or bottom edge with `↑` or `↓`, without a line, so a distant target does not flatten the candles.
+- **Create from the chart:** a long press on the price area opens the New alert sheet (§2.5) filled in with the price there, rounded to a whole dollar, and the direction from the current ticker price (`ABOVE` at or over it, `BELOW` under it; the last close before the first price). The user can edit both before creating; creating asks for the notification permission as the Alerts screen does. Tapping an alert line does nothing.
 
 ### 2.4 Chart Timeframes
 

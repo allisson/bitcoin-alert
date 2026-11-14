@@ -8,9 +8,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.allisson.bitcoinalert.BitcoinAlertApp
+import io.github.allisson.bitcoinalert.data.repository.AlertRepository
 import io.github.allisson.bitcoinalert.data.repository.CandleRepository
 import io.github.allisson.bitcoinalert.data.repository.CandleState
 import io.github.allisson.bitcoinalert.data.repository.SettingsRepository
+import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.AlertState
 import io.github.allisson.bitcoinalert.domain.model.ConnectionState
 import io.github.allisson.bitcoinalert.domain.model.MonitoringState
@@ -19,6 +21,7 @@ import io.github.allisson.bitcoinalert.domain.model.Ticker
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.service.MonitoringController
 import io.github.allisson.bitcoinalert.ui.launchUserWrite
+import java.math.BigDecimal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -72,8 +75,10 @@ class HomeViewModel(
     private val candleRepository: CandleRepository,
     private val settings: SettingsRepository,
     private val monitoringController: MonitoringController,
-    alerts: Flow<List<PriceAlert>>,
+    private val alertRepository: AlertRepository,
 ) : ViewModel() {
+    private val alerts = alertRepository.alerts
+
     val uiState: StateFlow<HomeUiState> = combine(
         ticker,
         ticker.stale(SystemClock::elapsedRealtime),
@@ -115,6 +120,11 @@ class HomeViewModel(
 
     fun retryCandles() = candleRepository.retry()
 
+    /** From a long press on the chart. */
+    fun createAlert(direction: AlertDirection, target: BigDecimal) {
+        viewModelScope.launchUserWrite { alertRepository.create(direction, target) }
+    }
+
     companion object {
         val Factory = viewModelFactory {
             initializer {
@@ -125,7 +135,7 @@ class HomeViewModel(
                     app.candleRepository,
                     app.settingsRepository,
                     app.monitoringController,
-                    app.alertRepository.alerts,
+                    app.alertRepository,
                 )
             }
         }

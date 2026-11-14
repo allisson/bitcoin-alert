@@ -31,6 +31,22 @@ class ChartLogicTest {
     }
 
     @Test
+    fun `a long press becomes a whole dollar target, above or below the current price`() {
+        val price = BigDecimal("96000.00")
+        // Axis from 94,000 at y = 400 to 98,000 at y = 0: 10 px per $100.
+        fun at(y: Float) = alertDraftAt(y, 0f, 400f, 94_000.0, 98_000.0, price)
+        assertEquals(AlertDraft(ABOVE, BigDecimal("98000.00")), at(0f))
+        assertEquals(AlertDraft(BELOW, BigDecimal("94000.00")), at(400f))
+        assertEquals(AlertDraft(ABOVE, BigDecimal("97000.00")), at(100f))
+        assertEquals(AlertDraft(BELOW, BigDecimal("95500.00")), at(250f))
+        assertEquals(AlertDraft(ABOVE, BigDecimal("96000.00")), at(200f))
+        assertEquals(AlertDraft(BELOW, BigDecimal("95999.00")), at(200.1f))
+        assertEquals(AlertDraft(ABOVE, BigDecimal("96001.00")), at(199.95f))
+        assertNull(at(-1f))
+        assertNull(at(401f))
+    }
+
+    @Test
     fun `candle change goes from the open to the close`() {
         fun candle(open: String, close: String) =
             Candle(0, BigDecimal(open), BigDecimal(close), BigDecimal(open), BigDecimal(close), BigDecimal.ONE)
