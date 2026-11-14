@@ -66,13 +66,13 @@ class AlertRepositoryTest {
         val repo = repository()
         val alert = repo.create(ABOVE, price("100000.5"))
         now = 5_000L
-        val historyId = repo.trigger(alert, price("100000.51000000"))
-        assertNotNull(historyId)
+        val triggered = repo.trigger(alert, price("100000.51000000"))
+        assertNotNull(triggered)
         val stored = repo.find(alert.id)
         assertEquals(AlertState.Triggered, stored.state)
         assertEquals(5_000L, stored.triggeredAt)
         val entry = repo.history.first().single()
-        assertEquals(historyId, entry.id)
+        assertEquals(entry, triggered)
         assertEquals(alert.id, entry.alertId)
         assertEquals("100000.50", entry.targetPrice.toPlainString())
         assertEquals("100000.51", entry.observedPrice.toPlainString())
@@ -162,10 +162,10 @@ class AlertRepositoryTest {
         val b = repo.create(ABOVE, price("2"))
         val c = repo.create(ABOVE, price("3"))
         now = 2_000L
-        val older = repo.trigger(a, price("1.01"))!!
+        val older = repo.trigger(a, price("1.01"))!!.id
         now = 3_000L
-        val sameTickFirst = repo.trigger(b, price("2.01"))!!
-        val sameTickSecond = repo.trigger(c, price("3.01"))!!
+        val sameTickFirst = repo.trigger(b, price("2.01"))!!.id
+        val sameTickSecond = repo.trigger(c, price("3.01"))!!.id
         assertEquals(listOf(sameTickSecond, sameTickFirst, older), repo.history.first().map { it.id })
     }
 

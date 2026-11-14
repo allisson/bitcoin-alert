@@ -9,15 +9,22 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import io.github.allisson.bitcoinalert.BitcoinAlertApp
+import io.github.allisson.bitcoinalert.domain.alerts.AlertEngine
 import io.github.allisson.bitcoinalert.domain.model.AlertState
+import io.github.allisson.bitcoinalert.notifications.ALERT_NOTIFICATION_ID
 import io.github.allisson.bitcoinalert.notifications.MONITORING_NOTIFICATION_ID
+import io.github.allisson.bitcoinalert.notifications.alertNotification
 import io.github.allisson.bitcoinalert.notifications.monitoringNotification
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 private const val TAG = "PriceMonitorService"
@@ -69,16 +76,29 @@ class PriceMonitorService : Service() {
         return START_STICKY
     }
 
-    // Without POST_NOTIFICATIONS Android drops the update; the service keeps running (spec.md §2.6).
+    // Without POST_NOTIFICATIONS Android drops the notifications; monitoring and the history go on (spec.md §2.6).
     @SuppressLint("MissingPermission")
-    private suspend fun monitor() {
-        app.alertRepository.alerts
-            .map { alerts -> alerts.count { it.state == AlertState.Active } }
-            .distinctUntilChanged()
-            .collect { count ->
-                activeAlerts = count
-                NotificationManagerCompat.from(this).notify(MONITORING_NOTIFICATION_ID, monitoringNotification(this, count))
+    private suspend fun monitor() = coroutineScope {
+        val notifications = NotificationManagerCompat.from(this@PriceMonitorService)
+        val alerts = app.alertRepository.alerts.stateIn(this)
+        launch {
+            alerts.map { list -> list.count { it.state == AlertState.Active } }
+                .distinctUntilChanged()
+                .collect { count ->
+                    activeAlerts = count
+                    notifications.notify(MONITORING_NOTIFICATION_ID, monitoringNotification(this@PriceMonitorService, count))
+                }
+        }
+        // A new engine per service instance: every start or restart takes a new baseline (spec.md §2.5).
+        val engine = AlertEngine()
+        // drop(1): the current ticker may predate the start (left from Home); the next one is the baseline.
+        app.binanceStreamClient.ticker.drop(1).filterNotNull().collect { ticker ->
+            for (alert in engine.onPrice(ticker.lastPrice, alerts.value)) {
+                // Notify only after the trigger transaction commits; null when the cycle is no longer Active.
+                val entry = app.alertRepository.trigger(alert, ticker.lastPrice) ?: continue
+                notifications.notify(entry.id.toString(), ALERT_NOTIFICATION_ID, alertNotification(this@PriceMonitorService, entry))
             }
+        }
     }
 
     override fun onDestroy() {

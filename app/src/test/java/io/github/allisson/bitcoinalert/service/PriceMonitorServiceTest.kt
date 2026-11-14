@@ -1,10 +1,19 @@
 package io.github.allisson.bitcoinalert.service
 
+import android.Manifest
+import android.app.Notification
+import android.app.NotificationManager
 import android.content.Intent
 import android.os.Looper
 import io.github.allisson.bitcoinalert.TestApp
+import io.github.allisson.bitcoinalert.domain.model.AlertDirection.ABOVE
+import io.github.allisson.bitcoinalert.notifications.ALERTS_CHANNEL_ID
+import io.github.allisson.bitcoinalert.notifications.ALERT_NOTIFICATION_ID
+import io.github.allisson.bitcoinalert.notifications.MONITORING_NOTIFICATION_ID
+import java.math.BigDecimal
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -23,6 +32,11 @@ import org.robolectric.annotation.Config
 @Config(application = TestApp::class)
 class PriceMonitorServiceTest {
     private val app = RuntimeEnvironment.getApplication() as TestApp
+    private val notifications = shadowOf(app.getSystemService(NotificationManager::class.java))
+
+    init {
+        shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     /** The service's coroutines run on the main looper; DataStore reads finish on another thread. */
     private fun waitUntil(condition: () -> Boolean) {
@@ -39,6 +53,48 @@ class PriceMonitorServiceTest {
         runBlocking { app.settingsRepository.setMonitoringRequested(requested) }
         return Robolectric.buildService(PriceMonitorService::class.java).create().get()
             .also { it.onStartCommand(null, 0, 1) }
+    }
+
+    /** A ticker message from Binance, then a pause so the service's collector on the main looper sees it. */
+    private fun price(value: String) {
+        waitUntil { app.listener != null }
+        app.listener!!.onMessage("""{"stream":"btcusdt@ticker","data":{"e":"24hrTicker","c":"$value","P":"0.00"}}""")
+        waitUntil { app.binanceStreamClient.ticker.value?.lastPrice?.compareTo(BigDecimal(value)) == 0 }
+        Thread.sleep(20)
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /** The Active count reaches the monitoring notification after the loop subscribed to the ticker. */
+    private fun startEvaluating(): PriceMonitorService = restart(requested = true).also {
+        waitUntil { notifications.getNotification(MONITORING_NOTIFICATION_ID)?.extras?.getCharSequence(Notification.EXTRA_TEXT) != null }
+    }
+
+    private fun alertNotifications() = notifications.allNotifications.filter { it.channelId == ALERTS_CHANNEL_ID }
+
+    @Test
+    fun `alerts crossed by the same price each post their own notification after the trigger`() {
+        val ids = runBlocking { listOf("100.00", "100.50").map { app.alertRepository.create(ABOVE, BigDecimal(it)).id } }
+        startEvaluating()
+        price("99.00")
+        price("101.00")
+        waitUntil { alertNotifications().size == 2 }
+        val history = runBlocking { app.alertRepository.history.first() }
+        assertEquals(ids.toSet(), history.map { it.alertId }.toSet())
+        history.forEach { assertNotNull(notifications.getNotification(it.id.toString(), ALERT_NOTIFICATION_ID)) }
+    }
+
+    @Test
+    fun `a ticker received before the start is not the baseline`() {
+        runBlocking { app.alertRepository.create(ABOVE, BigDecimal("100.00")) }
+        app.homeVisible.value = true
+        price("99.00")
+        startEvaluating()
+        price("101.00")
+        price("102.00")
+        Thread.sleep(100)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(emptyList<Notification>(), alertNotifications())
+        assertEquals(0, runBlocking { app.alertRepository.history.first() }.size)
     }
 
     @Test

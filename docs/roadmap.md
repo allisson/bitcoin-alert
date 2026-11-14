@@ -270,8 +270,8 @@ This is a critical phase because Android background execution restrictions can a
 - [x] Implement `PriceMonitorService`, in the main process (no `android:process`; `spec.md` §2.8).
 - [x] Implement explicit monitoring start action.
 - [x] Implement monitoring stop action.
-- [ ] Integrate the Binance WebSocket client.
-- [ ] Integrate the alert engine.
+- [x] Integrate the Binance WebSocket client.
+- [x] Integrate the alert engine.
 - [x] Implement service lifecycle management.
 - [x] Implement persistent notification.
 - [x] Persist the `monitoringRequested` flag in DataStore, through the single process-scoped DataStore instance created in Phase 2 and shared with the UI (`spec.md` §3.5).
@@ -282,7 +282,7 @@ This is a critical phase because Android background execution restrictions can a
 - [x] Display monitoring status and the monitoring control on the main screen: `Start` while Stopped, `Stop` while Running, both while Interrupted (`spec.md` §2.1), with unit tests.
 - [ ] Warn on the main screen when Active alerts exist and monitoring is Stopped or Interrupted, with unit tests (`spec.md` §7).
 - [ ] Offer the battery optimization exemption dialog on user action, from Home next to the monitoring control; hide the action once `isIgnoringBatteryOptimizations()` is `true`, re-evaluated on Home `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
-- [ ] Evaluate alerts only while monitoring is running.
+- [x] Evaluate alerts only while monitoring is running.
 - [ ] Implement connection status exposure.
 - [x] Implement service cleanup.
 - [x] Make `onStartCommand` idempotent: a repeated start must not open a second connection or evaluation loop (Android already keeps a single service instance).
@@ -295,12 +295,12 @@ This is a critical phase because Android background execution restrictions can a
 - [x] Create the price alerts notification channel (high importance).
 - [x] Display monitoring status (do not update the notification on every ticker message).
 - [x] Add an action to stop monitoring.
-- [ ] Open the History screen when an alert notification is tapped.
-- [ ] Open Home when the monitoring notification is tapped (`spec.md` §2.8).
-- [ ] Implement price alert notifications, posted only after the trigger transaction commits, each tagged with its history entry id and a fixed alert ID (`notify(historyId.toString(), ALERT_NOTIFICATION_ID, …)`; `spec.md` §2.6), with unit tests.
-- [ ] Configure default notification sound.
-- [ ] Configure vibration.
-- [ ] Request notification permission, while not granted, on every monitoring start and alert creation, without blocking the action on the dialog result (`spec.md` §2.6).
+- [x] Open the History screen when an alert notification is tapped.
+- [x] Open Home when the monitoring notification is tapped (`spec.md` §2.8).
+- [x] Implement price alert notifications, posted only after the trigger transaction commits, each tagged with its history entry id and a fixed alert ID (`notify(historyId.toString(), ALERT_NOTIFICATION_ID, …)`; `spec.md` §2.6), with unit tests.
+- [x] Configure default notification sound.
+- [x] Configure vibration.
+- [x] Request notification permission, while not granted, on every monitoring start and alert creation, without blocking the action on the dialog result (`spec.md` §2.6).
 - [ ] Warn on the main screen when Active alerts exist and notifications are disabled: permission denied, app notifications off (`areNotificationsEnabled()`) or Price alerts channel blocked; the warning opens the matching system settings and is re-evaluated on Home `ON_RESUME` (`spec.md` §2.1), with unit tests (`spec.md` §7).
 - [ ] Verify behavior when the user dismisses the monitoring notification (Android 14+).
 

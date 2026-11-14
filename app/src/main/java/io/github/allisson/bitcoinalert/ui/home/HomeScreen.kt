@@ -47,6 +47,7 @@ import io.github.allisson.bitcoinalert.domain.model.ConnectionState
 import io.github.allisson.bitcoinalert.domain.model.MonitoringState
 import io.github.allisson.bitcoinalert.domain.model.Timeframe
 import io.github.allisson.bitcoinalert.ui.charts.CandleChart
+import io.github.allisson.bitcoinalert.ui.rememberNotificationPermissionRequest
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
 import io.github.allisson.bitcoinalert.ui.theme.MonoFamily
 import java.util.Locale
@@ -62,6 +63,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val monitoring by viewModel.monitoring.collectAsStateWithLifecycle()
     val locale = LocalConfiguration.current.locales[0]
+    val requestNotifications = rememberNotificationPermissionRequest()
 
     Column(
         modifier = Modifier
@@ -71,7 +73,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         PriceSection(state, locale)
-        monitoring?.let { MonitoringRow(it, viewModel::startMonitoring, viewModel::stopMonitoring) }
+        monitoring?.let {
+            MonitoringRow(it, onStart = { requestNotifications(); viewModel.startMonitoring() }, onStop = viewModel::stopMonitoring)
+        }
         TimeframeTabs(state.timeframe, viewModel::selectTimeframe)
         CandlesArea(state.candles, locale, viewModel::retryCandles)
     }

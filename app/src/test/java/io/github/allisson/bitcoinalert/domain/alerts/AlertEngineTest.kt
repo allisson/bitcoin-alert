@@ -10,7 +10,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class AlertEngineTest {
-    private val engine = AlertEngine()
+    private var engine = AlertEngine()
 
     private fun alert(
         direction: AlertDirection,
@@ -29,14 +29,14 @@ class AlertEngineTest {
     fun `ABOVE triggers when the price goes from at or below the target to above it`() {
         val above = listOf(alert(ABOVE, "100.00"))
         assertEquals(listOf(listOf(), listOf("a")), feed(above, "99.99", "100.01"))
-        engine.reset()
+        engine = AlertEngine()
         assertEquals(listOf(listOf(), listOf("a")), feed(above, "100.00", "100.01"))
     }
 
     @Test
     fun `ABOVE does not trigger on reaching the target or staying above it`() {
         assertEquals(listOf(listOf<String>(), listOf(), listOf()), feed(listOf(alert(ABOVE, "100.00")), "99.99", "100.00", "100.00"))
-        engine.reset()
+        engine = AlertEngine()
         assertEquals(listOf(listOf<String>(), listOf()), feed(listOf(alert(ABOVE, "100.00")), "100.01", "100.02"))
     }
 
@@ -44,14 +44,14 @@ class AlertEngineTest {
     fun `BELOW triggers when the price goes from at or above the target to below it`() {
         val below = listOf(alert(BELOW, "100.00"))
         assertEquals(listOf(listOf(), listOf("a")), feed(below, "100.01", "99.99"))
-        engine.reset()
+        engine = AlertEngine()
         assertEquals(listOf(listOf(), listOf("a")), feed(below, "100.00", "99.99"))
     }
 
     @Test
     fun `BELOW does not trigger on reaching the target or staying below it`() {
         assertEquals(listOf(listOf<String>(), listOf(), listOf()), feed(listOf(alert(BELOW, "100.00")), "100.01", "100.00", "100.00"))
-        engine.reset()
+        engine = AlertEngine()
         assertEquals(listOf(listOf<String>(), listOf()), feed(listOf(alert(BELOW, "100.00")), "99.99", "99.98"))
     }
 
@@ -117,16 +117,8 @@ class AlertEngineTest {
     fun `the previous price is kept across a reconnection`() {
         val above = listOf(alert(ABOVE, "100.00"))
         feed(above, "99.00")
-        // No reset on reconnection: the crossing during the gap triggers on the first price after it.
+        // The same engine across a reconnection: the crossing during the gap triggers on the first price after it.
         assertEquals(listOf(listOf("a")), feed(above, "105.00"))
-    }
-
-    @Test
-    fun `reset on monitoring start discards the previous price`() {
-        val above = listOf(alert(ABOVE, "100.00"))
-        feed(above, "99.00")
-        engine.reset()
-        assertEquals(listOf(listOf<String>(), listOf()), feed(above, "105.00", "106.00"))
     }
 
     @Test

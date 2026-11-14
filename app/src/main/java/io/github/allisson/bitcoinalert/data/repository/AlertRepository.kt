@@ -43,9 +43,13 @@ class AlertRepository(private val dao: AlertDao, private val clock: () -> Long) 
     /** Deletes the alert; its history stays. */
     suspend fun delete(id: String) = dao.delete(id)
 
-    /** Triggers [alert]'s cycle; returns the history entry id, or `null` when that cycle is no longer Active. */
-    suspend fun trigger(alert: PriceAlert, observedPrice: BigDecimal): Long? =
-        dao.trigger(alert.toEntity(), observedPrice.setScale(2, RoundingMode.UNNECESSARY).toPlainString(), clock())
+    /** Triggers [alert]'s cycle; returns the history entry, or `null` when that cycle is no longer Active. */
+    suspend fun trigger(alert: PriceAlert, observedPrice: BigDecimal): AlertHistoryEntry? {
+        val observed = observedPrice.setScale(2, RoundingMode.UNNECESSARY)
+        val now = clock()
+        val id = dao.trigger(alert.toEntity(), observed.toPlainString(), now) ?: return null
+        return AlertHistoryEntry(id, alert.id, alert.targetPrice, observed, alert.direction, now)
+    }
 }
 
 private fun PriceAlertEntity.toDomain() = PriceAlert(
