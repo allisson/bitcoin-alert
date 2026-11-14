@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.database.sqlite.SQLiteException
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
@@ -70,7 +71,15 @@ class PriceMonitorService : Service() {
                 intent?.action == ACTION_STOP -> app.monitoringController.stop()
                 // A restart after the process died between the user's stop and the service stop.
                 intent == null && !app.settingsRepository.monitoringRequested.first() -> stopSelf()
-                monitoring == null -> monitoring = launch { monitor() }
+                monitoring == null -> monitoring = launch {
+                    try {
+                        monitor()
+                    } catch (e: SQLiteException) {
+                        // Usually persistent (disk full, corruption): stop, so the state shows Interrupted, rather than crash and restart.
+                        Log.w(TAG, "Database failure, stopping monitoring", e)
+                        stopSelf()
+                    }
+                }
             }
         }
         return START_STICKY
