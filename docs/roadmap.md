@@ -402,7 +402,7 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 - [x] Draw each Active alert as a line labeled with its target and distance from the price; pin alerts outside the candles' range to the edge.
 - [x] Create an alert by long-pressing the chart: the New alert sheet opens with the touched price and the matching direction. Checked on the API 37 emulator: `Above 73452` over the price, `Below 66642` under it, and the created alert's line drawn.
 - [x] Check the overlays on the device, in light and dark themes. Results in `spec.md` §7 (Device test results).
-- [ ] Fit the price axis to the visible candles. The axis covers every loaded candle (`CartesianLayerRangeProvider.Intrinsic`), so after a large move the visible candles are squeezed into a small band of the chart (seen on the device: 15m candles in the bottom quarter).
+- [x] Fit the price axis and the volume scale to the visible candles, refit when a candle enters or leaves the screen; the last price is pinned to the edge when scrolled out of range. Checked on the Galaxy A54: 1h and 15m candles fill the chart height at the end and after scrolling back, with `66.162 ↓` pinned to the bottom.
 - [x] Keep alert labels from overlapping: a target near the bottom is labeled under a Below alert pinned to that edge. Labels stack in price order; checked on the API 37 emulator with `70,000`/`69,800` and two alerts pinned to the bottom.
 
 **Acceptance criteria:**
