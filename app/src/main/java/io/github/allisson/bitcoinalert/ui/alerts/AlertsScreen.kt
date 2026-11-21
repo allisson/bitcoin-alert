@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import io.github.allisson.bitcoinalert.BitcoinAlertApp
 import io.github.allisson.bitcoinalert.R
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.PriceAlert
 import io.github.allisson.bitcoinalert.ui.DateFormats
@@ -118,9 +119,9 @@ fun AlertsScreen(viewModel: AlertsViewModel = viewModel(factory = AlertsViewMode
     }
 
     if (creating) {
-        NewAlertSheet(state.price, locale, onDismiss = { creating = false }) { direction, target ->
+        NewAlertSheet(state.price, locale, onDismiss = { creating = false }) { direction, target, delivery ->
             requestNotifications()
-            viewModel.create(direction, target)
+            viewModel.create(direction, target, delivery)
             creating = false
         }
     }
@@ -212,6 +213,7 @@ private fun AlertRow(
                     style = MaterialTheme.typography.labelMedium,
                     color = muted,
                 )
+                if (alert.delivery == AlertDelivery.ALARM) AlarmIcon(Modifier.align(Alignment.CenterVertically))
                 Text(
                     formatPrice(alert.targetPrice, locale),
                     Modifier.alignByBaseline(),

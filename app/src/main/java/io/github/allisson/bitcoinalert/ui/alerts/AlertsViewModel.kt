@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import io.github.allisson.bitcoinalert.BitcoinAlertApp
 import io.github.allisson.bitcoinalert.data.repository.AlertRepository
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.Ticker
 import io.github.allisson.bitcoinalert.ui.launchUserWrite
@@ -26,8 +27,8 @@ class AlertsViewModel(ticker: StateFlow<Ticker?>, private val repository: AlertR
     ) { t, sections -> AlertsUiState(t?.lastPrice, sections) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AlertsUiState())
 
-    fun create(direction: AlertDirection, target: BigDecimal) {
-        viewModelScope.launchUserWrite { repository.create(direction, target) }
+    fun create(direction: AlertDirection, target: BigDecimal, delivery: AlertDelivery) {
+        viewModelScope.launchUserWrite { repository.create(direction, target, delivery) }
     }
 
     /** The switch: enabling starts a new activation cycle. */
