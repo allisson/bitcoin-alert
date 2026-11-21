@@ -11,6 +11,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import io.github.allisson.bitcoinalert.BitcoinAlertApp
 import io.github.allisson.bitcoinalert.domain.alerts.AlertEngine
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertState
 import io.github.allisson.bitcoinalert.notifications.ALERT_NOTIFICATION_ID
 import io.github.allisson.bitcoinalert.notifications.MONITORING_NOTIFICATION_ID
@@ -66,11 +67,14 @@ class PriceMonitorService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        val dismiss = intent?.action == ACTION_DISMISS_ALARM
+        if (dismiss) app.alarmController.dismiss()
         scope.launch {
             when {
                 intent?.action == ACTION_STOP -> app.monitoringController.stop()
-                // A restart after the process died between the user's stop and the service stop.
-                intent == null && !app.settingsRepository.monitoringRequested.first() -> stopSelf()
+                // A restart after the process died between the user's stop and the service stop,
+                // or a Dismiss from a notification left by a stopped service.
+                (intent == null || dismiss) && !app.settingsRepository.monitoringRequested.first() -> stopSelf()
                 monitoring == null -> monitoring = launch {
                     try {
                         monitor()
@@ -105,12 +109,18 @@ class PriceMonitorService : Service() {
             for (alert in engine.onPrice(ticker.lastPrice, alerts.value)) {
                 // Notify only after the trigger transaction commits; null when the cycle is no longer Active.
                 val entry = app.alertRepository.trigger(alert, ticker.lastPrice) ?: continue
-                notifications.notify(entry.id.toString(), ALERT_NOTIFICATION_ID, alertNotification(this@PriceMonitorService, entry))
+                when (entry.delivery) {
+                    AlertDelivery.NOTIFICATION ->
+                        notifications.notify(entry.id.toString(), ALERT_NOTIFICATION_ID, alertNotification(this@PriceMonitorService, entry))
+                    AlertDelivery.ALARM -> app.alarmController.ring(entry)
+                }
             }
         }
     }
 
     override fun onDestroy() {
+        // Stopping monitoring silences a ringing alarm (spec.md §2.6, Alarm delivery).
+        app.alarmController.dismiss()
         scope.cancel()
         app.monitoringController.serviceRunning.value = false
         super.onDestroy()
@@ -118,5 +128,6 @@ class PriceMonitorService : Service() {
 
     companion object {
         const val ACTION_STOP = "io.github.allisson.bitcoinalert.action.STOP_MONITORING"
+        const val ACTION_DISMISS_ALARM = "io.github.allisson.bitcoinalert.action.DISMISS_ALARM"
     }
 }

@@ -6,8 +6,10 @@ import android.app.NotificationManager
 import android.content.Intent
 import android.os.Looper
 import io.github.allisson.bitcoinalert.TestApp
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection.ABOVE
 import io.github.allisson.bitcoinalert.domain.model.AlertState
+import io.github.allisson.bitcoinalert.notifications.ALARMS_CHANNEL_ID
 import io.github.allisson.bitcoinalert.notifications.ALERTS_CHANNEL_ID
 import io.github.allisson.bitcoinalert.notifications.ALERT_NOTIFICATION_ID
 import io.github.allisson.bitcoinalert.notifications.MONITORING_NOTIFICATION_ID
@@ -91,6 +93,57 @@ class PriceMonitorServiceTest {
         val history = runBlocking { app.alertRepository.history.first() }
         assertEquals(ids.toSet(), history.map { it.alertId }.toSet())
         history.forEach { assertNotNull(notifications.getNotification(it.id.toString(), ALERT_NOTIFICATION_ID)) }
+    }
+
+    private fun alarmNotifications() = notifications.allNotifications.filter { it.channelId == ALARMS_CHANNEL_ID }
+
+    private fun Notification.ongoing() = flags and Notification.FLAG_ONGOING_EVENT != 0
+
+    @Test
+    fun `a Notification-delivery trigger does not ring, an Alarm-delivery trigger does`() {
+        runBlocking {
+            app.alertRepository.create(ABOVE, BigDecimal("100.00"))
+            app.alertRepository.create(ABOVE, BigDecimal("100.50"), AlertDelivery.ALARM)
+        }
+        startEvaluating()
+        price("99.00")
+        price("101.00")
+        waitUntil { alertNotifications().size == 1 && alarmNotifications().size == 1 }
+        assertTrue(app.alarm.sounding)
+        assertTrue(app.alarm.vibrating)
+        val entry = app.alarmController.ringing.value.single()
+        val alarm = notifications.getNotification(entry.id.toString(), ALERT_NOTIFICATION_ID)
+        assertTrue(alarm.ongoing())
+        assertNotNull(alarm.fullScreenIntent)
+    }
+
+    @Test
+    fun `the notification's Dismiss silences the alarm and reposts it as regular`() {
+        runBlocking { app.alertRepository.create(ABOVE, BigDecimal("100.00"), AlertDelivery.ALARM) }
+        val service = startEvaluating()
+        price("99.00")
+        price("101.00")
+        waitUntil { app.alarm.sounding }
+        val id = app.alarmController.ringing.value.single().id.toString()
+        service.onStartCommand(Intent(app, PriceMonitorService::class.java).setAction(PriceMonitorService.ACTION_DISMISS_ALARM), 0, 2)
+        assertFalse(app.alarm.sounding)
+        assertFalse(notifications.getNotification(id, ALERT_NOTIFICATION_ID).ongoing())
+        shadowOf(Looper.getMainLooper()).idle()
+        assertFalse(shadowOf(service).isStoppedBySelf)
+    }
+
+    @Test
+    fun `stopping monitoring silences a ringing alarm`() {
+        runBlocking { app.alertRepository.create(ABOVE, BigDecimal("100.00"), AlertDelivery.ALARM) }
+        startEvaluating()
+        price("99.00")
+        price("101.00")
+        waitUntil { app.alarm.sounding }
+        services.forEach { it.destroy() }
+        services.clear()
+        assertFalse(app.alarm.sounding)
+        assertFalse(app.alarm.vibrating)
+        assertEquals(emptyList<Any>(), app.alarmController.ringing.value)
     }
 
     @Test
