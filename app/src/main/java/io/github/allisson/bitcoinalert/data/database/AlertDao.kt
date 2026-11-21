@@ -51,6 +51,7 @@ abstract class AlertDao {
                 observedPrice = observedPrice,
                 direction = alert.direction,
                 triggeredAt = now,
+                delivery = alert.delivery,
             ),
         )
     }
