@@ -494,6 +494,8 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 
 ### Release
 
+Phase 8 (Alarm delivery) is done before this section: its schema change ships under the `v0.*` destructive fallback, with no migration.
+
 - [ ] Replace `fallbackToDestructiveMigration(dropAllTables = true)` with `fallbackToDestructiveMigrationFrom(dropAllTables = true, <every schema version older than v1.0.0's>)` and freeze the v1 schema; from now on every schema change ships a Room migration (`spec.md` §3.5). Verify that updating the last `v0.*` install to `v1.0.0` opens without a crash.
 - [ ] Prepare version `v1.0.0`.
 - [ ] Create Git tag.
@@ -505,6 +507,47 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
 **Final acceptance criteria:**
 
 The Bitcoin Alert MVP is considered complete when all critical requirements in `spec.md` have been implemented, tested, and verified on a physical Android device.
+
+---
+
+## Phase 8 — Alarm Delivery
+
+**Goal:** Let an alert wake the user: an alert with the Alarm delivery rings over the lock screen until dismissed (`spec.md` §2.6, Alarm delivery).
+
+Done before the Phase 7 Release section, so the schema change needs no migration (`spec.md` §3.5). The feature only works if monitoring survives a night with the screen off, so the Phase 4 screen-off test (Battery validation) is part of this phase's acceptance.
+
+### Domain and persistence
+
+- [ ] Add the delivery (`NOTIFICATION`, `ALARM`) to `PriceAlert` and `AlertHistoryEntry`; add the `delivery` column to `price_alerts` and `alert_history`, copied into the history entry by the trigger transaction; bump `@Database(version)` to 2 and commit the exported schema (`spec.md` §2.5, §2.7, §3.5), with Room tests.
+
+### Alarm
+
+- [ ] Create the Alarms channel (high importance, no channel sound or vibration) (`spec.md` §2.6).
+- [ ] Declare `USE_FULL_SCREEN_INTENT` and `VIBRATE` (`spec.md` §5).
+- [ ] Ring from the service: the default alarm sound in a loop with `USAGE_ALARM`, a looping vibration, audio focus with delayed gain (vibration only during a call); one sound for every ringing alarm.
+- [ ] Post Alarm-delivery notifications on the Alarms channel: ongoing, `CATEGORY_ALARM`, `Dismiss` action, full-screen intent; same tag and ID as other alert notifications.
+- [ ] Implement `AlarmActivity` (`showWhenLocked`, `turnScreenOn`): title and text in large type, the number of ringing alarms, a large `Dismiss`; opened from the application too while an alarm rings.
+- [ ] Dismiss, from the screen or the notification, silences every ringing alarm and reposts their notifications as regular.
+- [ ] Timeout: 10 minutes after the latest trigger, stop ringing and repost the notifications as `Missed`, with an injected clock.
+- [ ] Stopping monitoring silences a ringing alarm.
+- [ ] Unit tests for the Alarm delivery listed in `spec.md` §7.
+
+### Interface
+
+- [ ] Add the `Alarm` switch to the New alert sheet, off by default, also when opened from the chart (`spec.md` §4).
+- [ ] Show the alarm clock icon on Alarm-delivery alerts in Alerts and on their History entries (`spec.md` §4).
+- [ ] Home warnings: the full-screen intent warning, and the blocked Alarms channel in the notifications warning, each only with an Active Alarm-delivery alert, re-evaluated on `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
+
+### Device testing
+
+- [ ] Run the Alarm delivery device tests in `spec.md` §7 on the Galaxy A54 and record the results in `spec.md` §7 (Device test results), including the night with the screen off (Phase 4, Battery validation).
+
+**Acceptance criteria:**
+
+- An Alarm-delivery alert created from the New alert sheet triggers on a real crossing with the device locked, in silent mode and with Do Not Disturb on: the screen turns on and the alarm rings until Dismiss, or for 10 minutes.
+- Monitoring with the screen off catches the crossing after a night.
+- Notification-delivery alerts behave as before.
+- The two Alarm delivery criteria in `spec.md` §8 are checked.
 
 ---
 
