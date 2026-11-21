@@ -25,6 +25,7 @@ The primary distribution method is direct APK installation through GitHub Releas
 - Allow users to configure price-above and price-below alerts.
 - Continue monitoring prices while the application is in the background.
 - Notify users when configured price conditions are reached.
+- Wake users with an alarm when an alert set to do so triggers (§2.6, Alarm delivery).
 - Store alerts and alert history locally.
 - Keep the application lightweight and easy to maintain.
 
@@ -59,7 +60,8 @@ The main screen must display:
 - Price monitoring status (`Stopped`, `Running`, `Interrupted` — see §2.8).
 - Monitoring control: `Start` while `Stopped`, `Stop` while `Running`, and both while `Interrupted` (`Start` starts the service again, `Stop` writes `monitoringRequested = false`; §2.8).
 - Battery optimization exemption action (§2.8), shown only while the application is not exempt (`PowerManager.isIgnoringBatteryOptimizations()` is `false`). The exemption changes outside the application without any callback, so it is re-evaluated whenever Home reaches `ON_RESUME`, like the notifications warning below.
-- A warning when notifications are disabled while Active alerts exist (alerts cannot be delivered): `POST_NOTIFICATIONS` denied, app notifications turned off (`NotificationManagerCompat.areNotificationsEnabled()` is `false`, which covers Android 8–12 without a runtime permission), or the Price alerts channel blocked (`IMPORTANCE_NONE`). The warning opens the system settings that fix the cause (`Settings.ACTION_APP_NOTIFICATION_SETTINGS`, or `Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS` for a blocked channel): after two denials Android no longer shows the permission dialog. These settings change outside the application without any callback, so the warning conditions are re-evaluated whenever Home reaches `ON_RESUME`.
+- A warning when notifications are disabled while Active alerts exist (alerts cannot be delivered): `POST_NOTIFICATIONS` denied, app notifications turned off (`NotificationManagerCompat.areNotificationsEnabled()` is `false`, which covers Android 8–12 without a runtime permission), the Price alerts channel blocked (`IMPORTANCE_NONE`), or the Alarms channel blocked while an Active alert has the Alarm delivery (§2.6). The warning opens the system settings that fix the cause (`Settings.ACTION_APP_NOTIFICATION_SETTINGS`, or `Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS` for a blocked channel): after two denials Android no longer shows the permission dialog. These settings change outside the application without any callback, so the warning conditions are re-evaluated whenever Home reaches `ON_RESUME`.
+- A warning when an Active alert has the Alarm delivery and the application cannot use full-screen intents (`NotificationManager.canUseFullScreenIntent()` is `false`; Android 14+, always allowed below): the Alarm still rings, but cannot show over the lock screen (§2.6). The warning opens `Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT` and, like the notifications warning, is re-evaluated whenever Home reaches `ON_RESUME`.
 - A warning when Active alerts exist and monitoring is `Stopped` or `Interrupted` (alerts are not being evaluated).
 - Candlestick chart.
 - Available chart timeframes.
@@ -179,6 +181,7 @@ Each alert must contain:
 - Unique identifier (`UUID.randomUUID().toString()`).
 - Target price.
 - Direction (`ABOVE` or `BELOW`).
+- Delivery (`NOTIFICATION` or `ALARM`, §2.6): chosen on creation, `NOTIFICATION` by default, never changed afterwards (editing alerts is a non-goal, §1.2).
 - Enabled/disabled status.
 - Creation timestamp.
 - Activation cycle (`activationCycle`): an integer, `0` on creation, incremented on enabling and reactivation. It identifies the current activation cycle. A counter, unlike a timestamp, never repeats when two activations fall in the same millisecond or the device clock moves back.
@@ -282,7 +285,8 @@ Notification channels:
 | Channel | Importance | Use |
 |---|---|---|
 | Monitoring | Low | Persistent Foreground Service notification. |
-| Price alerts | High | Alert notifications, with sound and vibration. |
+| Price alerts | High | Alert notifications of alerts with the Notification delivery, with sound and vibration. |
+| Alarms | High | Alert notifications of alerts with the Alarm delivery, `CATEGORY_ALARM`, with a full-screen intent. No channel sound or vibration: the service rings (Alarm delivery, below). |
 
 Notification behavior:
 
@@ -296,6 +300,24 @@ Notification behavior:
 - Respect Android notification permissions and user-configured notification channel settings. Sound and vibration are channel properties on Android 8+; after the channel is created, only the user can change them.
 - Request `POST_NOTIFICATIONS` (Android 13+), while it is not granted, every time the user starts monitoring or creates an alert. After two denials Android no longer shows the dialog, so repeated requests are harmless. The request does not block the action: monitoring starts (and the alert is saved) immediately, without waiting for the dialog result. If denied, or if notifications are otherwise disabled (§2.1), monitoring still runs, alerts are still recorded in history, and the main screen shows the warning from §2.1.
 
+#### Alarm delivery
+
+An alert's delivery (§2.5) decides how its trigger reaches the user. `NOTIFICATION` posts the alert notification described above. `ALARM` exists to wake the user: it rings until dismissed. Every rule above applies to both, except where this section says otherwise.
+
+When an alert with the Alarm delivery triggers (after the commit, like any alert notification):
+
+- **Ringing:** the service plays the system default alarm sound (`RingtoneManager.TYPE_ALARM`) in a loop, with `AudioAttributes` usage `USAGE_ALARM`, at the system alarm volume, and a looping vibration (`Vibrator`, which needs `VIBRATE`, §5). The alarm stream plays in silent and vibrate modes, and Do Not Disturb lets alarms through by default, so the application neither requests `ACCESS_NOTIFICATION_POLICY` nor bypasses Do Not Disturb. There is no sound picker and no in-app volume.
+- **Notification:** the alert notification is posted on the Alarms channel with the same content, tag and ID (§2.6), ongoing, with a `Dismiss` action and a full-screen intent that opens the alarm screen.
+- **Alarm screen:** `AlarmActivity`, separate from `MainActivity`, with `showWhenLocked` and `turnScreenOn`. It shows the notification title and text in large type and a large `Dismiss` button, and nothing else. It never exposes the rest of the application over the lock screen: dismissing it leaves the device locked.
+- **Dismiss** (on the screen or the notification) goes to the service: it stops the sound and the vibration, closes the alarm screen, and reposts each ringing alarm's notification as a regular one (not ongoing, no full-screen intent, no `Dismiss`); tapping it opens History.
+- **Timeout:** 10 minutes after the latest trigger with no Dismiss, the ringing stops and each ringing alarm's notification is reposted as regular, titled `Missed: BTC above 100,000.00` (or `below`), with the same text.
+- **No snooze:** a price event does not repeat; the user reactivates the alert or creates another.
+- **Several alarms:** alarms that trigger together, or while one is ringing, share one sound. Each keeps its own notification. The alarm screen shows the latest trigger and the number of ringing alarms. One Dismiss silences all of them. Each new trigger restarts the 10-minute timeout.
+- **Phone calls:** the service requests audio focus with `setAcceptsDelayedFocusGain(true)`. During a call the request returns `AUDIOFOCUS_REQUEST_DELAYED`: the alarm only vibrates, and the sound starts on the delayed focus gain if the alarm is still ringing. No `READ_PHONE_STATE` is needed.
+- **Notifications disabled** (permission denied, app notifications off or the Alarms channel blocked): there is no notification and no alarm screen from the full-screen intent, but the service still rings. Opening the application while an alarm rings shows the alarm screen with `Dismiss`. The §2.1 warning covers the cause.
+- **Full-screen intents not allowed** (`canUseFullScreenIntent()` is `false`): the alarm rings and the notification carries `Dismiss`; the §2.1 warning names the cause.
+- **Stopping monitoring** (from Home or the monitoring notification) silences a ringing alarm, as Dismiss does. If the process dies while ringing, the sound stops with it; this is accepted, like a lost notification (above).
+
 ### 2.7 Alert History
 
 The application must provide a local history of triggered alerts.
@@ -306,6 +328,7 @@ Each history entry must contain:
 - Target price.
 - Observed price.
 - Direction.
+- Delivery, copied from the alert when it triggers.
 - Trigger timestamp.
 
 Entries must be ordered from newest to oldest: `ORDER BY triggeredAt DESC, id DESC`. Alerts triggered by the same ticker update share `triggeredAt`; the auto-generated `id` (insertion order) keeps their order stable. The implicit `rowid` is not used: in a table without an `INTEGER PRIMARY KEY`, SQLite may renumber it on `VACUUM`.
@@ -566,6 +589,7 @@ data class PriceAlertEntity(
     @PrimaryKey val id: String, // UUID.randomUUID().toString()
     val targetPrice: String,
     val direction: String,
+    val delivery: String, // "NOTIFICATION" or "ALARM"
     val enabled: Boolean,
     val triggeredAt: Long?,
     val createdAt: Long,
@@ -583,6 +607,7 @@ data class AlertHistoryEntity(
     val targetPrice: String,
     val observedPrice: String,
     val direction: String,
+    val delivery: String, // copied from the alert: the entry outlives it (§2.7)
     val triggeredAt: Long
 )
 ```
@@ -617,7 +642,7 @@ The application should contain three primary areas:
 - Monitoring status and start/stop control.
 - Notifications-disabled and monitoring-stopped warnings (§2.1).
 - Battery optimization exemption action, next to the monitoring control, shown only while not exempt (§2.1, §2.8).
-- The warnings and the battery action are rows below the monitoring row, in the tertiary container color, in this order: `Monitoring is off: active alerts are not checked` (no button), `Notifications are off: alerts cannot reach you` (`Settings`), `Battery optimization can pause monitoring` (`Allow`). If a settings screen does not exist on the device, the tap does nothing and the row stays.
+- The warnings and the battery action are rows below the monitoring row, in the tertiary container color, in this order: `Monitoring is off: active alerts are not checked` (no button), `Notifications are off: alerts cannot reach you` (`Settings`), `Alarms can't show on the lock screen` (`Settings`), `Battery optimization can pause monitoring` (`Allow`). If a settings screen does not exist on the device, the tap does nothing and the row stays.
 - Candlestick chart.
 - Timeframe selector.
 - Quick access to alerts and history.
@@ -657,8 +682,9 @@ The visual direction is "Ticker" (`docs/prototypes/a-ticker.html`); the chart ov
 - Alerts: the current price under the title, then the Active, Triggered and Disabled sections; empty sections are hidden. The Alerts navigation item shows the number of Active alerts as a badge (hidden at zero).
   - Each Active alert shows the distance from the current price to its target, `|target − price| / price` with 2 decimal places (`HALF_UP`), and a bar filled `1 − distance / 10%`, clamped to [0, 1] (full at the target, empty at 10% or more). When the price is already past the target (above it for `ABOVE`, below it for `BELOW`), the alert shows "Price above target · waits for a crossing" (or below) and no bar. Without a price, only the creation date.
   - Actions by state: Active has a switch (on; turning it off disables) and Disabled a switch (off; turning it on enables); Triggered shows the observed price and trigger time from its history entry, with a Reactivate button below them (a trailing button next to the menu leaves the target too narrow and it wraps). When the direction and the target do not fit on one line (large font scales), the whole target moves below the direction instead of wrapping. Every alert has a menu with Delete, an explicit action instead of a swipe, confirmed by a dialog ("Its history stays").
-  - New alert opens a bottom sheet: Above/Below segmented buttons, the target field, the parsed target and its percentage from the current price ("Saves as 100,000.50 · +2.66% from now"), the validation error inline, and Create, enabled only for a valid target. A target already past the current price for the chosen direction is allowed, with a warning that the alert fires only after the price comes back and crosses it. There are no quick-value chips.
-- History: entries grouped by day (device time zone), newest first. Day headers read "Today", "Yesterday", then the short date with the device locale (`Nov 8`), with the year only when it is not the current one (`Oct 9, 2025`). Each entry shows the direction, the target, the observed price and the trigger time.
+  - An alert with the Alarm delivery shows an alarm clock icon next to its direction, in every section.
+  - New alert opens a bottom sheet (also opened from the chart, §2.3): an `Alarm` switch (off by default, the Notification delivery), Above/Below segmented buttons, the target field, the parsed target and its percentage from the current price ("Saves as 100,000.50 · +2.66% from now"), the validation error inline, and Create, enabled only for a valid target. A target already past the current price for the chosen direction is allowed, with a warning that the alert fires only after the price comes back and crosses it. There are no quick-value chips.
+- History: entries grouped by day (device time zone), newest first. Day headers read "Today", "Yesterday", then the short date with the device locale (`Nov 8`), with the year only when it is not the current one (`Oct 9, 2025`). Each entry shows the direction, the target, the observed price and the trigger time, with the alarm clock icon when its delivery was Alarm.
 - The target price is typed with the system decimal keyboard.
 
 ### Accessibility
@@ -693,6 +719,8 @@ Permissions:
 | `FOREGROUND_SERVICE_SPECIAL_USE` | `specialUse` service type (API 34+). |
 | `POST_NOTIFICATIONS` | Monitoring and alert notifications (API 33+, runtime). |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Battery optimization dialog, on user action (§2.8). |
+| `USE_FULL_SCREEN_INTENT` | Alarm screen over the lock screen (§2.6, Alarm delivery). On Android 14+ the user can revoke it (§2.1). |
+| `VIBRATE` | Looping alarm vibration through `Vibrator` (§2.6, Alarm delivery). The alert notification's single vibration comes from its channel and does not need it (§7). |
 | `WAKE_LOCK` | Only if the screen-off tests require a `PARTIAL_WAKE_LOCK` (§2.8). Not declared otherwise. |
 
 ## 6. Build and Distribution
@@ -797,6 +825,8 @@ Testing must cover the critical application behavior.
 - Network availability resets the backoff once; a failed attempt after it waits the backoff delay.
 - `Idle` state: with an empty stream set, network availability, the watchdog and the backoff never open a connection; a non-empty stream set leaves `Idle`.
 - Monitoring state after process death: the in-memory running flag starts `false`, so `monitoringRequested = true` derives Interrupted.
+- Alarm delivery (§2.6), with an injected clock: a Notification-delivery trigger does not ring and an Alarm-delivery trigger does; two Alarm triggers on the same ticker update ring once and post two notifications; one Dismiss silences both and reposts them as regular; the 10-minute timeout restarts on a new trigger and, when it expires, reposts the notifications as `Missed`; stopping monitoring silences the alarm; a delayed audio focus (call in progress) vibrates without sound and starts the sound on the focus gain.
+- Home warnings for the Alarm delivery (§2.1): the full-screen intent warning shows only with an Active Alarm-delivery alert and `canUseFullScreenIntent()` `false`; a blocked Alarms channel raises the notifications warning only with an Active Alarm-delivery alert.
 
 ### Integration tests
 
@@ -804,7 +834,7 @@ JVM tests (§3.1): Robolectric for Room and notifications, `MockWebServer` for R
 
 - Binance REST response parsing.
 - WebSocket message parsing, including `SUBSCRIBE`/`UNSUBSCRIBE` responses.
-- Room persistence.
+- Room persistence, including the alert's delivery and its copy in the history entry.
 - Alert transaction consistency.
 - Notification generation.
 - Service restart with `monitoringRequested = true`: `onStartCommand(null, …)` calls `startForeground`.
@@ -822,6 +852,7 @@ JVM tests (§3.1): Robolectric for Room and notifications, `MockWebServer` for R
 - Stopping the app from the Task Manager (Android 13+): expected state Interrupted; verify whether `START_STICKY` restarts it.
 - Foreground Service lifecycle.
 - Battery consumption.
+- Alarm delivery (§2.6): monitoring through a whole night with the screen off; a real Alarm-delivery trigger with the device locked, in silent mode and with Do Not Disturb on (the screen turns on and the alarm rings); whether `canUseFullScreenIntent()` is `true` for the sideloaded APK; Dismiss from the alarm screen and from the notification; the 10-minute timeout; a trigger during a phone call; what the tray shows after the process dies while ringing.
 
 ### Device test results
 
@@ -905,6 +936,8 @@ The MVP is complete when (evidence: §7, MVP walkthrough):
 - [x] The battery optimization action opens the system dialog and disappears once the application is exempt.
 - [x] The selected timeframe is restored on the next launch.
 - [x] Tapping an alert notification opens the History screen.
+- [ ] Users can create alerts with the Alarm delivery.
+- [ ] An Alarm-delivery alert rings over the lock screen, in silent mode and with Do Not Disturb on, until dismissed or for 10 minutes.
 - [x] Alert data is excluded from cloud backup and device-to-device transfer.
 - [x] Every screen is edge-to-edge with system bar insets applied.
 - [x] The accessibility requirements in §4 are met.
@@ -921,6 +954,7 @@ The following features are explicitly outside the MVP but may be considered in f
 - Android home screen widget.
 - Advanced alert conditions.
 - Price alerts with configurable cooldowns.
+- A sleep mode that gives every alert the Alarm delivery during set hours.
 - Optional encrypted backup.
 - Historical alert statistics.
 - Additional chart interactions.
