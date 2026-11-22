@@ -905,6 +905,19 @@ Release APK `v0.1.2` from GitHub Releases on the Galaxy A54, November 14, 2026, 
 | Accessibility (§4) | `▼` and the sign with the 24h change; icon buttons labeled (`Enabled` switch, `More options`); at font scale 2.0 every screen stays usable. An Active alert's target wrapped (`65.171,` / `00`); after the fix the whole target moves below the direction (debug build, Active and Disabled rows). |
 | GitHub Actions publishes a signed APK | `v0.1.2` release workflow: tests, signed APK, checksum and pre-release. |
 
+#### Alarm delivery (debug APK, November 21, 2026)
+
+Galaxy A54, Android 16, debug APK from the `feat/alarm-delivery` branch installed with `adb install -r`. The results were observed by the user; the permission state was read with `dumpsys package`.
+
+| Test | Result |
+|---|---|
+| Real Alarm-delivery trigger, device locked, silent mode, Do Not Disturb on | The screen turned on and the alarm screen showed over the lock screen; the alarm sound played and the device vibrated. |
+| `canUseFullScreenIntent()` for the sideloaded APK | `USE_FULL_SCREEN_INTENT: granted=true` (installer: `com.android.shell`); the full-screen intent opened the alarm screen. |
+| Dismiss from the alarm screen | Stops the sound and the vibration. |
+| Dismiss from the notification | Stops the sound and the vibration. |
+
+Not run yet: monitoring through a whole night with the screen off, the 10-minute timeout, a trigger during a phone call, and the tray after the process dies while ringing.
+
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
 
 ## 8. MVP Acceptance Criteria
@@ -936,7 +949,7 @@ The MVP is complete when (evidence: §7, MVP walkthrough):
 - [x] The battery optimization action opens the system dialog and disappears once the application is exempt.
 - [x] The selected timeframe is restored on the next launch.
 - [x] Tapping an alert notification opens the History screen.
-- [ ] Users can create alerts with the Alarm delivery.
+- [x] Users can create alerts with the Alarm delivery.
 - [ ] An Alarm-delivery alert rings over the lock screen, in silent mode and with Do Not Disturb on, until dismissed or for 10 minutes.
 - [x] Alert data is excluded from cloud backup and device-to-device transfer.
 - [x] Every screen is edge-to-edge with system bar insets applied.

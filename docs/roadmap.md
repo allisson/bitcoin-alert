@@ -524,9 +524,9 @@ Done before the Phase 7 Release section, so the schema change needs no migration
 
 - [x] Create the Alarms channel (high importance, no channel sound or vibration) (`spec.md` §2.6).
 - [x] Declare `USE_FULL_SCREEN_INTENT` and `VIBRATE` (`spec.md` §5).
-- [ ] Ring from the service: the default alarm sound in a loop with `USAGE_ALARM`, a looping vibration, audio focus with delayed gain (vibration only during a call); one sound for every ringing alarm. Implemented; checked on the device in Device testing below.
+- [ ] Ring from the service: the default alarm sound in a loop with `USAGE_ALARM`, a looping vibration, audio focus with delayed gain (vibration only during a call); one sound for every ringing alarm. Implemented; on the device the sound and vibration ring through silent mode and Do Not Disturb; the trigger during a call is still to check.
 - [x] Post Alarm-delivery notifications on the Alarms channel: ongoing, `CATEGORY_ALARM`, `Dismiss` action, full-screen intent; same tag and ID as other alert notifications.
-- [ ] Implement `AlarmActivity` (`showWhenLocked`, `turnScreenOn`): title and text in large type, the number of ringing alarms, a large `Dismiss`; opened from the application too while an alarm rings. Implemented; checked on the device in Device testing below.
+- [x] Implement `AlarmActivity` (`showWhenLocked`, `turnScreenOn`): title and text in large type, the number of ringing alarms, a large `Dismiss`; opened from the application too while an alarm rings.
 - [x] Dismiss, from the screen or the notification, silences every ringing alarm and reposts their notifications as regular.
 - [x] Timeout: 10 minutes after the latest trigger, stop ringing and repost the notifications as `Missed`, with an injected clock.
 - [x] Stopping monitoring silences a ringing alarm.
@@ -534,7 +534,7 @@ Done before the Phase 7 Release section, so the schema change needs no migration
 
 ### Interface
 
-- [ ] Add the `Alarm` switch to the New alert sheet, off by default, also when opened from the chart (`spec.md` §4). Implemented; checked on the device in Device testing below.
+- [x] Add the `Alarm` switch to the New alert sheet, off by default, also when opened from the chart (`spec.md` §4).
 - [ ] Show the alarm clock icon on Alarm-delivery alerts in Alerts and on their History entries (`spec.md` §4). Implemented; checked on the device in Device testing below.
 - [x] Home warnings: the full-screen intent warning, and the blocked Alarms channel in the notifications warning, each only with an Active Alarm-delivery alert, re-evaluated on `ON_RESUME` (`spec.md` §2.1, §4), with unit tests.
 
