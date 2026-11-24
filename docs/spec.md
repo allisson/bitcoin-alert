@@ -916,7 +916,17 @@ Galaxy A54, Android 16, debug APK from the `feat/alarm-delivery` branch installe
 | Dismiss from the alarm screen | Stops the sound and the vibration. |
 | Dismiss from the notification | Stops the sound and the vibration. |
 
-Not run yet: monitoring through a whole night with the screen off, the 10-minute timeout, a trigger during a phone call, and the tray after the process dies while ringing.
+#### Alarm delivery (local release build, November 21 to 24, 2026)
+
+Galaxy A54, Android 16, release build `0.0.0-dev` from the same commit, signed with the debug key and installed with `adb install`. The results were observed by the user.
+
+| Test | Result |
+|---|---|
+| 10-minute timeout | The alarm rang for 10 minutes without Dismiss, then stopped, and the notification was reposted as `Missed: …`. |
+| Trigger during a phone call | The alarm only vibrated, with no sound. |
+| Process killed while ringing | The sound stopped with the process (accepted, §2.6); the tray showed what the user expected. |
+| Monitoring through a night with the screen off | The Alarm-delivery alert triggered after a night with the screen off. |
+| Alarm clock icon | Shown on the Alarm-delivery alert in Alerts and on its History entry. |
 
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
 
@@ -950,7 +960,7 @@ The MVP is complete when (evidence: §7, MVP walkthrough):
 - [x] The selected timeframe is restored on the next launch.
 - [x] Tapping an alert notification opens the History screen.
 - [x] Users can create alerts with the Alarm delivery.
-- [ ] An Alarm-delivery alert rings over the lock screen, in silent mode and with Do Not Disturb on, until dismissed or for 10 minutes.
+- [x] An Alarm-delivery alert rings over the lock screen, in silent mode and with Do Not Disturb on, until dismissed or for 10 minutes.
 - [x] Alert data is excluded from cloud backup and device-to-device transfer.
 - [x] Every screen is edge-to-edge with system bar insets applied.
 - [x] The accessibility requirements in §4 are met.
