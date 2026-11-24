@@ -14,6 +14,7 @@ data class PriceAlertEntity(
     val triggeredAt: Long?,
     val createdAt: Long,
     val activationCycle: Int,
+    val delivery: String, // "NOTIFICATION" or "ALARM"
 )
 
 // No foreign key to price_alerts: deleting an alert keeps its history (spec.md §2.7).
@@ -25,4 +26,5 @@ data class AlertHistoryEntity(
     val observedPrice: String,
     val direction: String,
     val triggeredAt: Long,
+    val delivery: String, // copied from the alert: the entry outlives it (spec.md §2.7)
 )

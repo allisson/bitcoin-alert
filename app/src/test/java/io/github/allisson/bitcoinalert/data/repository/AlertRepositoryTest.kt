@@ -2,6 +2,7 @@ package io.github.allisson.bitcoinalert.data.repository
 
 import androidx.room.Room
 import io.github.allisson.bitcoinalert.data.database.AppDatabase
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection.ABOVE
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection.BELOW
 import io.github.allisson.bitcoinalert.domain.model.AlertState
@@ -78,6 +79,22 @@ class AlertRepositoryTest {
         assertEquals("100000.51", entry.observedPrice.toPlainString())
         assertEquals(ABOVE, entry.direction)
         assertEquals(5_000L, entry.triggeredAt)
+    }
+
+    @Test
+    fun `the delivery defaults to Notification and is copied into the history entry`() = runBlocking {
+        val repo = repository()
+        val notification = repo.create(ABOVE, price("100"))
+        val alarm = repo.create(ABOVE, price("101"), AlertDelivery.ALARM)
+        assertEquals(AlertDelivery.NOTIFICATION, repo.find(notification.id).delivery)
+        assertEquals(AlertDelivery.ALARM, repo.find(alarm.id).delivery)
+
+        assertEquals(AlertDelivery.ALARM, repo.trigger(alarm, price("102"))!!.delivery)
+        repo.trigger(notification, price("102"))
+        repo.delete(alarm.id)
+        val history = repo.history.first().associateBy { it.alertId }
+        assertEquals(AlertDelivery.ALARM, history.getValue(alarm.id).delivery)
+        assertEquals(AlertDelivery.NOTIFICATION, history.getValue(notification.id).delivery)
     }
 
     @Test

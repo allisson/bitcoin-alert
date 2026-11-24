@@ -27,9 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.allisson.bitcoinalert.BitcoinAlertApp
 import io.github.allisson.bitcoinalert.R
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.AlertHistoryEntry
 import io.github.allisson.bitcoinalert.ui.DateFormats
+import io.github.allisson.bitcoinalert.ui.alerts.AlarmIcon
 import io.github.allisson.bitcoinalert.ui.home.formatPrice
 import io.github.allisson.bitcoinalert.ui.rememberDateFormats
 import io.github.allisson.bitcoinalert.ui.theme.LocalPriceColors
@@ -106,6 +108,7 @@ private fun HistoryRow(entry: AlertHistoryEntry, locale: Locale, dates: DateForm
                     style = MaterialTheme.typography.labelMedium,
                     color = muted,
                 )
+                if (entry.delivery == AlertDelivery.ALARM) AlarmIcon(Modifier.padding(bottom = 3.dp))
                 Text(
                     formatPrice(entry.targetPrice, locale),
                     style = MaterialTheme.typography.titleMedium,

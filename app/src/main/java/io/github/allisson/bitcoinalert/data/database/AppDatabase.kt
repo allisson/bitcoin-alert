@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 // Bump the version on every schema change, including during v0.* (spec.md §3.5).
-@Database(entities = [PriceAlertEntity::class, AlertHistoryEntity::class], version = 1, exportSchema = true)
+@Database(entities = [PriceAlertEntity::class, AlertHistoryEntity::class], version = 2, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alertDao(): AlertDao
 

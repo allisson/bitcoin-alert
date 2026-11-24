@@ -105,9 +105,9 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel(factory = HomeViewModel.Fact
     draft?.let { (direction, target) ->
         // Keyed by the draft, so a new long press starts the form from its own values.
         key(direction, target) {
-            NewAlertSheet(state.ticker?.lastPrice, locale, onDismiss = { draft = null }, initialDirection = direction, initialTarget = target) { d, t ->
+            NewAlertSheet(state.ticker?.lastPrice, locale, onDismiss = { draft = null }, initialDirection = direction, initialTarget = target) { d, t, delivery ->
                 requestNotifications()
-                viewModel.createAlert(d, t)
+                viewModel.createAlert(d, t, delivery)
                 draft = null
             }
         }
@@ -204,6 +204,11 @@ private fun Warnings(warnings: HomeWarnings) {
     warnings.notificationsFix?.let { fix ->
         WarningRow(R.drawable.ic_notifications_off, R.string.warning_notifications_off, R.string.settings) {
             context.startSettings(notificationSettingsIntent(context, fix))
+        }
+    }
+    if (warnings.fullScreenOff) {
+        WarningRow(R.drawable.ic_alarm, R.string.warning_full_screen, R.string.settings) {
+            context.startSettings(fullScreenIntentSettingsIntent(context))
         }
     }
     if (warnings.batteryAction) {

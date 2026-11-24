@@ -38,6 +38,7 @@ import io.github.allisson.bitcoinalert.domain.model.AlertState
 import io.github.allisson.bitcoinalert.notifications.EXTRA_OPEN
 import io.github.allisson.bitcoinalert.notifications.OPEN_HISTORY
 import io.github.allisson.bitcoinalert.notifications.OPEN_HOME
+import io.github.allisson.bitcoinalert.ui.alarm.AlarmActivity
 import io.github.allisson.bitcoinalert.ui.alerts.AlertsScreen
 import io.github.allisson.bitcoinalert.ui.history.HistoryScreen
 import io.github.allisson.bitcoinalert.ui.home.HomeScreen
@@ -126,6 +127,14 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    // With notifications disabled, the application is the way to the alarm's Dismiss (spec.md §2.6).
+    override fun onResume() {
+        super.onResume()
+        if ((application as BitcoinAlertApp).alarmController.ringing.value.isNotEmpty()) {
+            startActivity(Intent(this, AlarmActivity::class.java))
         }
     }
 

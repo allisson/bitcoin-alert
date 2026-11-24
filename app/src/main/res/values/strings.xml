@@ -72,4 +72,13 @@
     <string name="alert_notification_above">BTC above %1$s</string>
     <string name="alert_notification_below">BTC below %1$s</string>
     <string name="alert_notification_text">Observed %1$s at %2$s</string>
+    <string name="channel_alarms">Alarms</string>
+    <string name="alarm">Alarm</string>
+    <string name="alarm_missed">Missed: %1$s</string>
+    <string name="dismiss">Dismiss</string>
+    <plurals name="alarms_ringing">
+        <item quantity="one">%d alarm ringing</item>
+        <item quantity="other">%d alarms ringing</item>
+    </plurals>
+    <string name="warning_full_screen">Alarms can\'t show on the lock screen</string>
 </resources>

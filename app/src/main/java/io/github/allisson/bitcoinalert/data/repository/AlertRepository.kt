@@ -3,6 +3,7 @@ package io.github.allisson.bitcoinalert.data.repository
 import io.github.allisson.bitcoinalert.data.database.AlertDao
 import io.github.allisson.bitcoinalert.data.database.AlertHistoryEntity
 import io.github.allisson.bitcoinalert.data.database.PriceAlertEntity
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.AlertHistoryEntry
 import io.github.allisson.bitcoinalert.domain.model.PriceAlert
@@ -21,7 +22,7 @@ class AlertRepository(private val dao: AlertDao, private val clock: () -> Long) 
     val history: Flow<List<AlertHistoryEntry>> = dao.observeHistory().map { list -> list.map { it.toDomain() } }
 
     /** Creates an Active alert in cycle 0. [target] must already be validated (> 0, at most 2 decimals). */
-    suspend fun create(direction: AlertDirection, target: BigDecimal): PriceAlert {
+    suspend fun create(direction: AlertDirection, target: BigDecimal, delivery: AlertDelivery = AlertDelivery.NOTIFICATION): PriceAlert {
         val alert = PriceAlert(
             id = UUID.randomUUID().toString(),
             targetPrice = target.setScale(2, RoundingMode.UNNECESSARY),
@@ -30,6 +31,7 @@ class AlertRepository(private val dao: AlertDao, private val clock: () -> Long) 
             triggeredAt = null,
             createdAt = clock(),
             activationCycle = 0,
+            delivery = delivery,
         )
         dao.insert(alert.toEntity())
         return alert
@@ -48,7 +50,7 @@ class AlertRepository(private val dao: AlertDao, private val clock: () -> Long) 
         val observed = observedPrice.setScale(2, RoundingMode.UNNECESSARY)
         val now = clock()
         val id = dao.trigger(alert.toEntity(), observed.toPlainString(), now) ?: return null
-        return AlertHistoryEntry(id, alert.id, alert.targetPrice, observed, alert.direction, now)
+        return AlertHistoryEntry(id, alert.id, alert.targetPrice, observed, alert.direction, now, alert.delivery)
     }
 }
 
@@ -60,6 +62,7 @@ private fun PriceAlertEntity.toDomain() = PriceAlert(
     triggeredAt = triggeredAt,
     createdAt = createdAt,
     activationCycle = activationCycle,
+    delivery = AlertDelivery.valueOf(delivery),
 )
 
 private fun PriceAlert.toEntity() = PriceAlertEntity(
@@ -70,6 +73,7 @@ private fun PriceAlert.toEntity() = PriceAlertEntity(
     triggeredAt = triggeredAt,
     createdAt = createdAt,
     activationCycle = activationCycle,
+    delivery = delivery.name,
 )
 
 private fun AlertHistoryEntity.toDomain() = AlertHistoryEntry(
@@ -79,4 +83,5 @@ private fun AlertHistoryEntity.toDomain() = AlertHistoryEntry(
     observedPrice = BigDecimal(observedPrice),
     direction = AlertDirection.valueOf(direction),
     triggeredAt = triggeredAt,
+    delivery = AlertDelivery.valueOf(delivery),
 )

@@ -12,6 +12,7 @@ import io.github.allisson.bitcoinalert.data.repository.AlertRepository
 import io.github.allisson.bitcoinalert.data.repository.CandleRepository
 import io.github.allisson.bitcoinalert.data.repository.CandleState
 import io.github.allisson.bitcoinalert.data.repository.SettingsRepository
+import io.github.allisson.bitcoinalert.domain.model.AlertDelivery
 import io.github.allisson.bitcoinalert.domain.model.AlertDirection
 import io.github.allisson.bitcoinalert.domain.model.AlertState
 import io.github.allisson.bitcoinalert.domain.model.ConnectionState
@@ -35,7 +36,8 @@ import kotlinx.coroutines.flow.transformLatest
 
 private const val STALE_MILLIS = 10_000L
 
-data class MonitoringUi(val state: MonitoringState, val activeAlerts: Int)
+/** [activeAlarms]: the Active alerts with the Alarm delivery, part of [activeAlerts]. */
+data class MonitoringUi(val state: MonitoringState, val activeAlerts: Int, val activeAlarms: Int = 0)
 
 /** [timeframe] is `null` until the stored one is read. */
 data class HomeUiState(
@@ -93,11 +95,10 @@ class HomeViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** `null` until the stored request flag and the alerts are read. */
-    val monitoring: StateFlow<MonitoringUi?> = combine(
-        monitoringController.state,
-        alerts.map { list -> list.count { it.state == AlertState.Active } },
-        ::MonitoringUi,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    val monitoring: StateFlow<MonitoringUi?> = combine(monitoringController.state, alerts) { state, list ->
+        val active = list.filter { it.state == AlertState.Active }
+        MonitoringUi(state, active.size, active.count { it.delivery == AlertDelivery.ALARM })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun startMonitoring() {
         viewModelScope.launchUserWrite {
@@ -121,8 +122,8 @@ class HomeViewModel(
     fun retryCandles() = candleRepository.retry()
 
     /** From a long press on the chart. */
-    fun createAlert(direction: AlertDirection, target: BigDecimal) {
-        viewModelScope.launchUserWrite { alertRepository.create(direction, target) }
+    fun createAlert(direction: AlertDirection, target: BigDecimal, delivery: AlertDelivery) {
+        viewModelScope.launchUserWrite { alertRepository.create(direction, target, delivery) }
     }
 
     companion object {

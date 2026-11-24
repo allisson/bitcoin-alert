@@ -306,14 +306,14 @@ An alert's delivery (§2.5) decides how its trigger reaches the user. `NOTIFICAT
 
 When an alert with the Alarm delivery triggers (after the commit, like any alert notification):
 
-- **Ringing:** the service plays the system default alarm sound (`RingtoneManager.TYPE_ALARM`) in a loop, with `AudioAttributes` usage `USAGE_ALARM`, at the system alarm volume, and a looping vibration (`Vibrator`, which needs `VIBRATE`, §5). The alarm stream plays in silent and vibrate modes, and Do Not Disturb lets alarms through by default, so the application neither requests `ACCESS_NOTIFICATION_POLICY` nor bypasses Do Not Disturb. There is no sound picker and no in-app volume.
-- **Notification:** the alert notification is posted on the Alarms channel with the same content, tag and ID (§2.6), ongoing, with a `Dismiss` action and a full-screen intent that opens the alarm screen.
+- **Ringing:** the service plays the system default alarm sound (`RingtoneManager.TYPE_ALARM`) in a loop, with `AudioAttributes` usage `USAGE_ALARM`, at the system alarm volume (the default ringtone when the device has no alarm sound; if neither plays, the vibration goes on), and a looping vibration (`Vibrator`, which needs `VIBRATE`, §5). The alarm stream plays in silent and vibrate modes, and Do Not Disturb lets alarms through by default, so the application neither requests `ACCESS_NOTIFICATION_POLICY` nor bypasses Do Not Disturb. There is no sound picker and no in-app volume.
+- **Notification:** the alert notification is posted on the Alarms channel with the same content, tag and ID (§2.6), ongoing, with a `Dismiss` action and a full-screen intent that opens the alarm screen; tapping it opens the alarm screen too.
 - **Alarm screen:** `AlarmActivity`, separate from `MainActivity`, with `showWhenLocked` and `turnScreenOn`. It shows the notification title and text in large type and a large `Dismiss` button, and nothing else. It never exposes the rest of the application over the lock screen: dismissing it leaves the device locked.
 - **Dismiss** (on the screen or the notification) goes to the service: it stops the sound and the vibration, closes the alarm screen, and reposts each ringing alarm's notification as a regular one (not ongoing, no full-screen intent, no `Dismiss`); tapping it opens History.
 - **Timeout:** 10 minutes after the latest trigger with no Dismiss, the ringing stops and each ringing alarm's notification is reposted as regular, titled `Missed: BTC above 100,000.00` (or `below`), with the same text.
 - **No snooze:** a price event does not repeat; the user reactivates the alert or creates another.
 - **Several alarms:** alarms that trigger together, or while one is ringing, share one sound. Each keeps its own notification. The alarm screen shows the latest trigger and the number of ringing alarms. One Dismiss silences all of them. Each new trigger restarts the 10-minute timeout.
-- **Phone calls:** the service requests audio focus with `setAcceptsDelayedFocusGain(true)`. During a call the request returns `AUDIOFOCUS_REQUEST_DELAYED`: the alarm only vibrates, and the sound starts on the delayed focus gain if the alarm is still ringing. No `READ_PHONE_STATE` is needed.
+- **Phone calls:** the service requests audio focus with `setAcceptsDelayedFocusGain(true)`. During a call the request returns `AUDIOFOCUS_REQUEST_DELAYED`: the alarm only vibrates, and the sound starts on the delayed focus gain if the alarm is still ringing. A call that starts while ringing (a transient focus loss) silences the sound until the focus returns; the vibration goes on. A refused request still rings: waking the user comes first. No `READ_PHONE_STATE` is needed.
 - **Notifications disabled** (permission denied, app notifications off or the Alarms channel blocked): there is no notification and no alarm screen from the full-screen intent, but the service still rings. Opening the application while an alarm rings shows the alarm screen with `Dismiss`. The §2.1 warning covers the cause.
 - **Full-screen intents not allowed** (`canUseFullScreenIntent()` is `false`): the alarm rings and the notification carries `Dismiss`; the §2.1 warning names the cause.
 - **Stopping monitoring** (from Home or the monitoring notification) silences a ringing alarm, as Dismiss does. If the process dies while ringing, the sound stops with it; this is accepted, like a lost notification (above).
@@ -905,6 +905,19 @@ Release APK `v0.1.2` from GitHub Releases on the Galaxy A54, November 14, 2026, 
 | Accessibility (§4) | `▼` and the sign with the 24h change; icon buttons labeled (`Enabled` switch, `More options`); at font scale 2.0 every screen stays usable. An Active alert's target wrapped (`65.171,` / `00`); after the fix the whole target moves below the direction (debug build, Active and Disabled rows). |
 | GitHub Actions publishes a signed APK | `v0.1.2` release workflow: tests, signed APK, checksum and pre-release. |
 
+#### Alarm delivery (debug APK, November 21, 2026)
+
+Galaxy A54, Android 16, debug APK from the `feat/alarm-delivery` branch installed with `adb install -r`. The results were observed by the user; the permission state was read with `dumpsys package`.
+
+| Test | Result |
+|---|---|
+| Real Alarm-delivery trigger, device locked, silent mode, Do Not Disturb on | The screen turned on and the alarm screen showed over the lock screen; the alarm sound played and the device vibrated. |
+| `canUseFullScreenIntent()` for the sideloaded APK | `USE_FULL_SCREEN_INTENT: granted=true` (installer: `com.android.shell`); the full-screen intent opened the alarm screen. |
+| Dismiss from the alarm screen | Stops the sound and the vibration. |
+| Dismiss from the notification | Stops the sound and the vibration. |
+
+Not run yet: monitoring through a whole night with the screen off, the 10-minute timeout, a trigger during a phone call, and the tray after the process dies while ringing.
+
 Prioritize complete coverage of critical business rules rather than an arbitrary overall code coverage percentage.
 
 ## 8. MVP Acceptance Criteria
@@ -936,7 +949,7 @@ The MVP is complete when (evidence: §7, MVP walkthrough):
 - [x] The battery optimization action opens the system dialog and disappears once the application is exempt.
 - [x] The selected timeframe is restored on the next launch.
 - [x] Tapping an alert notification opens the History screen.
-- [ ] Users can create alerts with the Alarm delivery.
+- [x] Users can create alerts with the Alarm delivery.
 - [ ] An Alarm-delivery alert rings over the lock screen, in silent mode and with Do Not Disturb on, until dismissed or for 10 minutes.
 - [x] Alert data is excluded from cloud backup and device-to-device transfer.
 - [x] Every screen is edge-to-edge with system bar insets applied.
