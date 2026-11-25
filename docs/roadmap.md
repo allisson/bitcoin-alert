@@ -429,9 +429,9 @@ Chart overlays from `docs/prototypes/chart-options.html`, option 2 (`spec.md` §
   keytool -list -v -keystore ~/keys/bitcoin-alert-release.jks -alias bitcoin-alert | grep SHA256
   ```
 
-- [ ] Create the full distribution account at https://android.google.com/developerconsole/developers (`spec.md` §6): pay the one-time US$ 25 and verify identity with a government-issued photo ID, a proof of address, and an email and phone number (2-Step Verification is already on).
-- [ ] On the **Packages** page, register `io.github.allisson.bitcoinalert` with the SHA-256 fingerprint; wait for *Registered* (email notice). Done before the `v1.0.0` tag (`v0.*` pre-releases may ship first), so GitHub Releases installs keep working after the 2027 global rollout.
-- [ ] Record the outcome (application ID and signing certificate fingerprint registered) and the installation path in `spec.md` §6.
+- [x] Create the developer account (`spec.md` §6): verify identity with a government-issued photo ID, a proof of address, and an email and phone number (2-Step Verification is already on). Done in the Play Console instead of the Android Developer Console; identity verified on 2026-11-23.
+- [x] Register `io.github.allisson.bitcoinalert` with the SHA-256 fingerprint; wait for *Registered*. Done before the `v1.0.0` tag (`v0.*` pre-releases may ship first), so GitHub Releases installs keep working after the 2027 global rollout. Registered on 2026-11-25 on the Play Console Android developer verification page, key *Verified*.
+- [x] Record the outcome (application ID and signing certificate fingerprint registered) and the installation path in `spec.md` §6.
 - [x] Configure signing credentials as GitHub Actions Secrets: `KEYSTORE_BASE64` (output of `base64 -i ~/keys/bitcoin-alert-release.jks`), `KEYSTORE_PASSWORD` and `KEY_ALIAS`. The PKCS12 keystore `keytool` generates uses the same password for the store and the key, so Gradle passes `KEYSTORE_PASSWORD` as both `storePassword` and `keyPassword`.
 - [x] Configure Release signing: Gradle reads `KEYSTORE_FILE`, `KEYSTORE_PASSWORD` and `KEY_ALIAS` from the environment, and the Release APK is unsigned without them. Checked with a throwaway key: `apksigner verify` printed its certificate.
 - [x] Verify signing: download the `v0.1.0` APK and check that `apksigner verify --print-certs` prints the key's fingerprint (signing happens only in CI; the password never sits on the local machine). It printed `fcdfa238…a670`, the fingerprint `keytool` showed.
