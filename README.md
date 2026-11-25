@@ -46,7 +46,8 @@ A newer release installs over the previous one and keeps your alerts and history
 signed with the same key; an APK signed with another key fails to install as an update.
 
 From 2027 Android requires apps installed outside Google Play to come from a verified developer.
-The application ID will be registered before `v1.0.0` (`docs/spec.md` §6).
+The developer is verified, and the application ID `io.github.allisson.bitcoinalert` is registered
+with the signing certificate above (`docs/spec.md` §6), so installs keep working after that.
 
 ## Permissions
 
